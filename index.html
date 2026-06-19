@@ -45,7 +45,7 @@
 
   /* ---------- temporizador / centro ---------- */
   .center{display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-    align-self:start; padding-top:3vh; gap:10px; min-width:240px;}
+    align-self:start; padding-top:2vh; gap:10px; min-width:240px;}
   .timer{font-family:"Consolas",monospace; font-size:84px; font-weight:bold; letter-spacing:2px;
     text-shadow:0 0 18px rgba(255,210,60,.7), 0 0 4px #000; line-height:1;}
   .timer.low{color:#ff4242; text-shadow:0 0 22px rgba(255,40,40,.9), 0 0 4px #000;
@@ -58,7 +58,14 @@
     box-shadow:0 0 18px rgba(255,210,60,.35);}
   .timer-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
   .timer-avatar.empty{opacity:.35;}
-  .vs{font-size:40px; font-weight:bold; font-style:italic;
+  .duel-users{position:absolute; z-index:8; pointer-events:none; left:15vw; right:15vw; top:14vh;
+    display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:24px;}
+  .duel-user{min-width:0; font-size:clamp(28px,4.1vw,58px); font-weight:900; line-height:1;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:0;
+    text-shadow:3px 3px 0 #000, 0 0 18px currentColor, 0 0 34px rgba(255,255,255,.22);}
+  #duel-user-left{text-align:right; color:var(--left);}
+  #duel-user-right{text-align:left; color:var(--right);}
+  .vs{font-size:clamp(34px,4.6vw,64px); font-weight:bold; font-style:italic;
     color:#ffd23f; text-shadow:0 0 14px rgba(255,210,60,.8), 2px 2px 0 #000;}
   .feed{display:flex; flex-direction:column; gap:6px; align-items:center; height:30vh; overflow:hidden;
     width:260px;}
@@ -75,7 +82,7 @@
     12%{opacity:1; transform:translateY(0) scale(1)}100%{opacity:0; transform:translateY(-40px)}}
 
   /* ---------- scouter: medidor de KI estilo Dragon Ball ---------- */
-  .scouter{position:absolute; top:16vh; z-index:7; pointer-events:none; display:none;
+  .scouter{position:absolute; top:24vh; z-index:7; pointer-events:none; display:none;
     width:min(27vw,250px); --sc:#ff7a00;
     font-family:"Consolas","Courier New",monospace;
     filter:drop-shadow(0 4px 7px rgba(0,0,0,.55));}
@@ -110,7 +117,7 @@
   @keyframes kiBlinkSlow{50%{opacity:.35}}
   @keyframes kiBlinkFast{50%{opacity:.18}}
   .sc-unit{font-size:12px; font-weight:bold; color:var(--sc); opacity:.85;}
-  .sc-user{max-width:180px; margin-top:3px; font-size:12px; font-weight:bold; color:#fff;
+  .sc-user{display:none; max-width:180px; margin-top:3px; font-size:12px; font-weight:bold; color:#fff;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.9;
     text-shadow:0 0 7px var(--sc), 1px 1px 0 #000;}
   #scouter-right .sc-user{text-align:right; margin-left:auto;}
@@ -294,6 +301,12 @@
   <div class="feed-side" id="feed-left"></div>
   <div class="feed-side" id="feed-right"></div>
 
+  <div class="duel-users">
+    <div class="duel-user" id="duel-user-left"></div>
+    <div class="vs">VS</div>
+    <div class="duel-user" id="duel-user-right"></div>
+  </div>
+
   <!-- scouters: nivel de KI de cada luchador (estilo Dragon Ball) -->
   <div class="scouter" id="scouter-left">
     <div class="lens">
@@ -332,7 +345,6 @@
         <div class="timer" id="timer">05:00</div>
         <div class="timer-avatar empty" id="timer-av-right">?</div>
       </div>
-      <div class="vs">VS</div>
       <div class="feed" id="feed"></div>
     </div>
 
@@ -606,6 +618,12 @@ function setTimerAvatar(side){
     el.classList.add('empty');
     el.textContent = '?';
   }
+}
+function setDuelUser(side){
+  const s = sides[side];
+  const el = document.getElementById('duel-user-'+side);
+  if(!el) return;
+  el.textContent = s.name ? (s.user || s.name || '') : '';
 }
 
 /* ---- sombreado de color + rayos eléctricos (SS2+) ---- */
@@ -1120,6 +1138,7 @@ function renderSide(side){
   const next = s.name ? ladder[nextPhaseIndex(s.name, s.phase)] : ladder[s.phase+1];
   const team = s.name ? cfg(s.name).team : (side==='left'?'#ff7a00':'#2d6cff');
   setTimerAvatar(side);
+  setDuelUser(side);
 
   document.getElementById('name-'+side).textContent = s.name || '—';
   document.getElementById('name-'+side).style.color = team;
