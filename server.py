@@ -317,8 +317,12 @@ class Handler(BaseHTTPRequestHandler):
         log('webhook:', {
             'event': obj.get('event'),
             'username': obj.get('username') or obj.get('user'),
+            'nickname': obj.get('nickname'),
+            'comment': obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content'),
             'character': obj.get('character'),
             'coins': obj.get('coins'),
+            'giftname': obj.get('giftname') or obj.get('giftName'),
+            'repeatcount': obj.get('repeatcount'),
         })
         self.send_response(200)
         self._cors()
