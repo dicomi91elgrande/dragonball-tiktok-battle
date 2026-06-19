@@ -1433,6 +1433,10 @@ function handleEvent(d){
       delete pendingPick[userKey];
       if(!side) return;             // entró en cola; este regalo no va a otro equipo
     }
+    if(!side && named && hasPlayableSprite(named)){
+      side = activateQueuedOrPending({name:named, face, user:username, key:userKey});
+      if(!side) return;
+    }
     if(!side) side = sideForGift(userKey, named);
     if(!sides[side].name) return;   // todavía no hay luchador en ese lado
     addEnergy(side, value, username, userKey);
