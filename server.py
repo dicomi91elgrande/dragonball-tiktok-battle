@@ -308,8 +308,9 @@ class Handler(BaseHTTPRequestHandler):
             obj = {'event': 'raw', 'raw': raw.decode('utf-8', 'replace')}
         if not isinstance(obj, dict):
             obj = {'event': 'raw', 'raw': obj}
-        # Reconoce comandos tipo !Goku aunque Interactive nombre el evento/campo de otra forma.
-        matched = command_char(obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content') or '')
+        # Reconoce el personaje escrito en el chat. Acepta "Goku" y tambien comandos tipo "!Goku".
+        text = obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content') or ''
+        matched = command_char(text) or find_char(text)
         if matched:
             obj['character'] = matched
         broadcast(obj)

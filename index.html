@@ -1008,10 +1008,10 @@ function hasPlayableSprite(name){
   return !!(spr && ladder.some(ph => spr[ph.name] && spr[ph.name].f));
 }
 
-function findCharCommand(text){
-  const m = String(text||'').match(/!(\S+)/);
-  if(!m) return null;
-  const q = slug(m[1]);
+function findCharText(text){
+  const raw = String(text||'').trim();
+  const m = raw.match(/!(\S+)/);
+  const q = slug(m ? m[1] : raw);
   if(!q) return null;
   let best = null;
   for(const name of Object.keys(ROSTER)){
@@ -1409,7 +1409,7 @@ function handleEvent(d){
   const userKey = d.username || d.uniqueId || d.userId || d.user || d.nickname || 'alguien';
   const username = d.nickname || d.username || d.user || 'alguien';
   const text = d.comment || d.message || d.text || d.content || '';
-  const named = d.character || findCharCommand(text) || null;
+  const named = d.character || findCharText(text) || null;
   const face = avatarOf(d);
   const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName || d.giftname;
 
@@ -1417,7 +1417,7 @@ function handleEvent(d){
     if(!named) return;
     if(!hasPlayableSprite(named)) return;
     pendingPick[userKey] = {name:named, face, user:username, key:userKey};
-    popFeed(username+' prepara '+named, cfg(named).team);
+    popFeed(username+' selecciona a '+named+', envia cualquier regalo para ir a la batalla', cfg(named).team);
     return;
   }
 
