@@ -173,6 +173,12 @@
   #np-right .estat{flex-direction:row-reverse;}
 
   .supporters{font-size:13px; opacity:.85; height:18px; overflow:hidden; text-shadow:1px 1px 0 #000;}
+  .queue{position:absolute; left:50%; bottom:6px; z-index:9; transform:translateX(-50%);
+    width:min(92vw,720px); min-height:18px; text-align:center; font-size:12px; font-weight:bold;
+    color:rgba(255,255,255,.82); text-shadow:1px 1px 0 #000; pointer-events:none;}
+  .queue b{color:#ffd23f;}
+  .queue span{display:inline-block; max-width:150px; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; vertical-align:bottom;}
 
   /* ---------- sprite + aura ---------- */
   /* margin-bottom = hueco que antes dejaba la nameplate (ahora absoluta) para conservar la altura del sprite */
@@ -357,6 +363,8 @@
     </div>
   </div>
 
+  <div class="queue" id="queue"></div>
+
   <div class="victory" id="victory">
     <h1 id="v-title">¡GANADOR!</h1>
     <div class="vmon" id="v-mon"></div>
@@ -476,6 +484,8 @@ const sides = {
   right: {name:null, energy:0, phase:0, supporters:[]},
 };
 const userTeam = {};         // username -> 'left'|'right'
+const pendingPick = {};      // username -> personaje elegido con !Nombre, pendiente de regalo
+const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
 let timer = DURATION, timerId = null, running = false, ended = false;
 
 /* ====================== RENDER ====================== */
@@ -1190,6 +1200,42 @@ function pickCharacter(side, name, faceUrl, faceLabel){
   renderSide(side);
 }
 
+function openSide(){
+  if(!sides.left.name) return 'left';
+  if(!sides.right.name) return 'right';
+  return null;
+}
+
+function queueKey(username, name){ return slug(username)+'|'+slug(name); }
+
+function renderQueue(){
+  const el = document.getElementById('queue');
+  if(!el) return;
+  if(!fightQueue.length){ el.innerHTML=''; return; }
+  el.innerHTML = '<b>Cola:</b> '+fightQueue.slice(0,8).map(q=>
+    '<span>'+q.user.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+' - '+q.name+'</span>'
+  ).join(' · ')+(fightQueue.length>8?' · ...':'');
+}
+
+function enqueueFighter(entry){
+  if(fightQueue.some(q=>queueKey(q.user,q.name)===queueKey(entry.user,entry.name))) return;
+  fightQueue.push(entry);
+  renderQueue();
+}
+
+function activateQueuedOrPending(entry){
+  if(!entry || !hasPlayableSprite(entry.name)) return null;
+  const side = openSide();
+  if(side){
+    pickCharacter(side, entry.name, entry.face, entry.user);
+    userTeam[entry.user] = side;
+    renderQueue();
+    return side;
+  }
+  enqueueFighter(entry);
+  return null;
+}
+
 function checkTransform(side){
   const s = sides[side];
   if(!s.name) return;
@@ -1309,6 +1355,9 @@ function resetAll(){
   sides.left={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
   sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
   for(const k in userTeam) delete userTeam[k];
+  for(const k in pendingPick) delete pendingPick[k];
+  fightQueue.length = 0;
+  renderQueue();
   for(const side of ['left','right']){ const f=document.getElementById('fill-'+side);
     if(f){ clearTimeout(f._rt); f.style.transition='none'; f.style.transform='scaleX(0)'; void f.offsetWidth; f.style.transition=''; } }
   kiShown.left=0; kiShown.right=0;
@@ -1339,12 +1388,8 @@ function handleEvent(d){
   if(ev==='comment'){
     if(!named) return;
     if(!hasPlayableSprite(named)) return;
-    // si el personaje ya está en un lado, el usuario se une a ese equipo
-    if(sides.left.name===named){ userTeam[username]='left'; renderSide('left'); return; }
-    if(sides.right.name===named){ userTeam[username]='right'; renderSide('right'); return; }
-    // si hay hueco libre, entra a luchar (su cara va en el monigote)
-    if(!sides.left.name){ pickCharacter('left', named, face, username); userTeam[username]='left'; }
-    else if(!sides.right.name){ pickCharacter('right', named, face, username); userTeam[username]='right'; }
+    pendingPick[username] = {name:named, face, user:username};
+    popFeed(username+' prepara '+named, cfg(named).team);
     return;
   }
 
@@ -1352,7 +1397,14 @@ function handleEvent(d){
   const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName;
   if(isGift){
     const value = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
-    const side = sideForGift(username, named);
+    let side = userTeam[username] || null;
+    const wanted = pendingPick[username] || null;
+    if(!side && wanted){
+      side = activateQueuedOrPending(pendingPick[username]);
+      delete pendingPick[username];
+      if(!side) return;             // entró en cola; este regalo no va a otro equipo
+    }
+    if(!side) side = sideForGift(username, named);
     if(!sides[side].name) return;   // todavía no hay luchador en ese lado
     addEnergy(side, value, username);
     popFeed('+'+value+' ⚡ '+username, cfg(sides[side].name).team, side);

@@ -152,6 +152,14 @@ def find_char(text):
     return best['name'] if best else None
 
 
+def command_char(text):
+    """Reconoce comandos tipo !Goku, !MRPOPO o !Yancha dentro del comentario."""
+    m = re.search(r'!(\S+)', text or '')
+    if not m:
+        return None
+    return find_char(m.group(1))
+
+
 def broadcast(obj):
     """Envía un evento (dict) a todos los overlays conectados."""
     data = json.dumps(obj, ensure_ascii=False)
@@ -303,7 +311,7 @@ class Handler(BaseHTTPRequestHandler):
         # En comentarios intentamos reconocer un personaje; si no, lo dejamos pasar igual
         # pero marcado, por si el overlay quiere mostrar el chat.
         if obj.get('event') == 'comment':
-            matched = find_char(obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content') or '')
+            matched = command_char(obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content') or '')
             obj['character'] = matched or ''
         broadcast(obj)
         avatar = obj.get('imgprofile') or obj.get('img') or obj.get('avatar') or obj.get('avatarUrl') or obj.get('profileImage') or obj.get('profilePicture') or obj.get('profilePictureUrl') or ''
