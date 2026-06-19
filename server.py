@@ -319,6 +319,7 @@ class Handler(BaseHTTPRequestHandler):
             'event': obj.get('event'),
             'username': obj.get('username') or obj.get('user'),
             'nickname': obj.get('nickname'),
+            'imgprofile': avatar if avatar and '{' not in str(avatar) else None,
             'comment': obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content'),
             'character': obj.get('character'),
             'coins': obj.get('coins'),
