@@ -1,0 +1,13 @@
+# Render Blueprint — despliegue en 1 clic.
+# En Render: New + -> Blueprint -> conecta el repo con este archivo.
+services:
+  - type: web
+    name: dragonball-tiktok-battle
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    # Para proteger el webhook, descomenta y pon un valor secreto:
+    # envVars:
+    #   - key: HOOK_TOKEN
+    #     value: pon-aqui-un-secreto-largo

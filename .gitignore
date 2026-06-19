@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.pyc
+
+# Editores / SO
+.vscode/
+.DS_Store
+Thumbs.db

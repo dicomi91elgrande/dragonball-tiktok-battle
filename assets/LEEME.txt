@@ -1,0 +1,8 @@
+Esta carpeta es para recursos opcionales.
+
+Por defecto NO hacen falta sprites: cada luchador es un monigote dibujado en SVG
+con la foto de perfil de TikTok como cabeza (ver README.md, sección "Aspecto").
+
+Puedes poner aquí:
+  - battle-music.mp3   -> música de fondo (opcional)
+  - cualquier imagen propia que quieras usar para personalizar el fondo, etc.

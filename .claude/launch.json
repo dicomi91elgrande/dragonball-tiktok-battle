@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dragonball",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["server.py"],
+      "port": 3000
+    }
+  ]
+}

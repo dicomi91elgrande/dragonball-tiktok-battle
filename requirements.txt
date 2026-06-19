@@ -1,0 +1,2 @@
+# Sin dependencias: el servidor usa solo la librería estándar de Python.
+# Este archivo existe para que Render detecte que es un proyecto Python.

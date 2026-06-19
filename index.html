@@ -1,0 +1,1548 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dragon Ball TikTok Battle</title>
+<style>
+  :root{
+    --left:#ff7a00; --right:#2d6cff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; font-family:"Trebuchet MS","Segoe UI",sans-serif; color:#fff;
+    background:#05060d;}
+  #app{position:relative; width:100vw; height:100vh;}
+
+  /* ---------- fondo ---------- */
+  .bg{position:absolute; inset:0; z-index:0;
+    background:
+      radial-gradient(120% 80% at 20% 10%, rgba(255,122,0,.18), transparent 50%),
+      radial-gradient(120% 80% at 80% 10%, rgba(45,108,255,.18), transparent 50%),
+      radial-gradient(140% 120% at 50% 120%, rgba(120,60,255,.20), transparent 60%),
+      linear-gradient(#070912,#02030a 70%);}
+  .stars{position:absolute; inset:0; z-index:0; opacity:.5;
+    background-image:radial-gradient(1px 1px at 10% 20%,#fff,transparent),
+      radial-gradient(1px 1px at 30% 70%,#fff,transparent),
+      radial-gradient(1px 1px at 60% 40%,#fff,transparent),
+      radial-gradient(1px 1px at 80% 80%,#fff,transparent),
+      radial-gradient(1px 1px at 90% 30%,#fff,transparent),
+      radial-gradient(1px 1px at 45% 15%,#fff,transparent);
+    background-size:200px 200px; animation:twinkle 5s linear infinite;}
+  @keyframes twinkle{50%{opacity:.2}}
+  body.shake #app{animation:shake .5s linear;}
+  @keyframes shake{0%,100%{transform:translate(0,0)}
+    20%{transform:translate(-10px,6px)}40%{transform:translate(8px,-8px)}
+    60%{transform:translate(-7px,-4px)}80%{transform:translate(6px,7px)}}
+
+  /* ---------- choque de haces (WebGL) ---------- */
+  #clash{position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none;}
+  #mon-right{transform:scaleX(-1);}   /* el luchador derecho mira a la izquierda */
+
+  /* ---------- escenario ---------- */
+  .stage{position:relative; z-index:2; display:grid;
+    grid-template-columns:1fr auto 1fr; align-items:end; height:100%;
+    padding:0 3vw 4vh;}
+
+  /* ---------- temporizador / centro ---------- */
+  .center{display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    align-self:start; padding-top:3vh; gap:10px; min-width:240px;}
+  .timer{font-family:"Consolas",monospace; font-size:84px; font-weight:bold; letter-spacing:2px;
+    text-shadow:0 0 18px rgba(255,210,60,.7), 0 0 4px #000; line-height:1;}
+  .timer.low{color:#ff4242; text-shadow:0 0 22px rgba(255,40,40,.9), 0 0 4px #000;
+    animation:pulse .7s ease-in-out infinite;}
+  @keyframes pulse{50%{transform:scale(1.08)}}
+  .timer-row{display:flex; align-items:center; justify-content:center; gap:16px;}
+  .timer-avatar{width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    border:3px solid rgba(255,255,255,.9); background:rgba(0,0,0,.45); color:#fff;
+    font-size:24px; font-weight:bold; text-shadow:1px 1px 0 #000; overflow:hidden;
+    box-shadow:0 0 18px rgba(255,210,60,.35);}
+  .timer-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
+  .timer-avatar.empty{opacity:.35;}
+  .vs{font-size:40px; font-weight:bold; font-style:italic;
+    color:#ffd23f; text-shadow:0 0 14px rgba(255,210,60,.8), 2px 2px 0 #000;}
+  .feed{display:flex; flex-direction:column; gap:6px; align-items:center; height:30vh; overflow:hidden;
+    width:260px;}
+  /* avisos de regalo / subida de fase: DELANTE del personaje, en la zona media,
+     y un poco a la izq/dcha del centro según el lado que dona */
+  .feed-side{position:absolute; z-index:8; pointer-events:none;
+    display:flex; flex-direction:column; gap:6px; align-items:center; transform:translateX(-50%);}
+  #feed-left{left:47%; top:34%;}    /* casi centrado, lado izq un pelín arriba */
+  #feed-right{left:53%; top:49%;}   /* casi centrado, lado dcho un pelín abajo */
+  .gift-pop{font-size:15px; font-weight:bold; padding:5px 12px; border-radius:20px;
+    background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18);
+    animation:floatUp 3.4s ease-out forwards; white-space:nowrap;}
+  @keyframes floatUp{0%{opacity:0; transform:translateY(14px) scale(.8)}
+    12%{opacity:1; transform:translateY(0) scale(1)}100%{opacity:0; transform:translateY(-40px)}}
+
+  /* ---------- scouter: medidor de KI estilo Dragon Ball ---------- */
+  .scouter{position:absolute; top:16vh; z-index:7; pointer-events:none; display:none;
+    width:min(27vw,250px); --sc:#ff7a00;
+    font-family:"Consolas","Courier New",monospace;
+    filter:drop-shadow(0 4px 7px rgba(0,0,0,.55));}
+  .scouter.on{display:block;}
+  #scouter-left{right:53%;}
+  #scouter-right{left:53%;}
+  .scouter .lens{position:relative; overflow:hidden; padding:7px 16px 9px;
+    background:linear-gradient(135deg, rgba(10,16,26,.93), rgba(4,8,16,.8));
+    border:1.5px solid var(--sc);
+    box-shadow:0 0 16px var(--sc), inset 0 0 22px rgba(0,0,0,.65);
+    clip-path:polygon(0 0,100% 0,100% 62%,85% 100%,0 100%);}
+  #scouter-right .lens{clip-path:polygon(0 0,100% 0,100% 100%,15% 100%,0 62%);}
+  .scouter .lens::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 42%, rgba(255,255,255,.08) 50%, transparent 58%);}
+  .sc-top{display:flex; align-items:center; gap:8px; margin-bottom:1px;}
+  #scouter-right .sc-top{flex-direction:row-reverse;}
+  .sc-tag{font-size:10px; letter-spacing:2px; font-weight:bold; color:var(--sc);
+    opacity:.9; text-transform:uppercase; text-shadow:0 0 6px var(--sc); white-space:nowrap;}
+  .sc-dot{width:7px; height:7px; border-radius:50%; background:#ff3b3b;
+    box-shadow:0 0 7px #ff3b3b; animation:scDot 1.1s steps(2) infinite; flex:none;}
+  @keyframes scDot{50%{opacity:.2}}
+  .sc-readout{display:flex; align-items:baseline; gap:5px; line-height:1;}
+  #scouter-right .sc-readout{flex-direction:row-reverse;}
+  .sc-ki{font-size:32px; font-weight:bold; color:#fff; letter-spacing:1px; white-space:nowrap;
+    text-shadow:0 0 10px var(--sc), 0 0 3px var(--sc), 1px 1px 0 #000;
+    animation:scFlick 2.4s ease-in-out infinite;}
+  @keyframes scFlick{49%{opacity:1}49.5%{opacity:.78}50%{opacity:1}
+    92%{opacity:1}92.5%{opacity:.85}93%{opacity:1}}
+  .scouter.ki-warn .sc-ki{animation:kiBlinkSlow 1.25s steps(2) infinite;}
+  .scouter.ki-danger .sc-ki{animation:kiBlinkFast .42s steps(2) infinite; color:#ffe24d;
+    text-shadow:0 0 14px #ff3b3b, 0 0 6px var(--sc), 1px 1px 0 #000;}
+  @keyframes kiBlinkSlow{50%{opacity:.35}}
+  @keyframes kiBlinkFast{50%{opacity:.18}}
+  .sc-unit{font-size:12px; font-weight:bold; color:var(--sc); opacity:.85;}
+  .sc-user{max-width:180px; margin-top:3px; font-size:12px; font-weight:bold; color:#fff;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.9;
+    text-shadow:0 0 7px var(--sc), 1px 1px 0 #000;}
+  #scouter-right .sc-user{text-align:right; margin-left:auto;}
+  .sc-bars{display:flex; gap:3px; margin-top:5px;}
+  #scouter-right .sc-bars{flex-direction:row-reverse;}
+  .sc-bars i{position:relative; flex:1; height:4px; overflow:hidden;
+    background:rgba(255,255,255,.12); border-radius:1px;}
+  .sc-bars i span{position:absolute; inset:0; width:100%; background:var(--sc);
+    box-shadow:0 0 6px var(--sc); transform-origin:left; transform:scaleX(var(--fill,0));
+    transition:transform .35s cubic-bezier(.2,.8,.2,1);}
+  #scouter-right .sc-bars i span{transform-origin:right;}
+  .sc-scan{position:absolute; left:0; right:0; top:0; height:2px; pointer-events:none;
+    background:linear-gradient(90deg, transparent, var(--sc), transparent);
+    opacity:.5; mix-blend-mode:screen; animation:scScan 2.6s linear infinite;}
+  @keyframes scScan{0%{top:-6%}100%{top:106%}}
+  .scouter.spike .lens{animation:scSpike .6s ease-out;}
+  @keyframes scSpike{0%{box-shadow:0 0 16px var(--sc), inset 0 0 22px rgba(0,0,0,.65)}
+    22%{box-shadow:0 0 30px #ff3b3b, 0 0 60px #ff3b3b, inset 0 0 22px rgba(0,0,0,.4); transform:scale(1.06)}
+    100%{box-shadow:0 0 16px var(--sc), inset 0 0 22px rgba(0,0,0,.65); transform:scale(1)}}
+  .scouter.spike .sc-ki{animation:scKiSpike .6s ease-out;}
+  @keyframes scKiSpike{0%,100%{color:#fff}30%{color:#ffe24d; text-shadow:0 0 20px #ff3b3b, 0 0 8px #ff3b3b}}
+
+  /* ---------- luchador ---------- */
+  .fighter{position:relative; display:flex; flex-direction:column; align-items:center; gap:10px;
+    height:100%; justify-content:flex-end;}
+  .fighter.left{align-items:flex-end;}     /* pegado hacia el centro (stream vertical) */
+  .fighter.right{align-items:flex-start;}
+
+  /* barras: ancladas abajo, se tocan en el centro y caben dentro del sprite */
+  .nameplate{display:flex; flex-direction:column; gap:5px; padding:0 6px; width:min(33vw,360px);}
+  .stage > .nameplate{position:absolute; bottom:4vh; z-index:3;}
+  #np-left{right:51%; padding-right:12px;}
+  #np-right{left:51%; padding-left:12px; align-items:flex-end; text-align:right;}
+  .who{display:flex; align-items:center; gap:9px;}
+  #np-right .who{flex-direction:row-reverse;}
+  .avatar{width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #fff;
+    background:#222; flex:none;}
+  .cname{font-size:27px; font-weight:bold; text-shadow:2px 2px 0 #000, 0 0 12px currentColor;}
+  .phase{font-size:17px; font-weight:bold; letter-spacing:.5px;
+    text-shadow:1px 1px 0 #000, 0 0 10px currentColor; min-height:20px;}
+
+  .ebar{position:relative; height:22px; border-radius:12px; overflow:hidden;
+    background:rgba(255,255,255,.10); border:2px solid rgba(0,0,0,.5); width:100%;}
+  .efill{position:absolute; inset:0; transform-origin:left; width:100%;
+    transition:transform .5s cubic-bezier(.2,.8,.2,1);}
+  #np-right .efill{transform-origin:right;}   /* la barra derecha se carga de derecha a izquierda */
+  /* power up de la barra al cambiar de fase: pop + brillo + barrido de luz */
+  .ebar.powerup{animation:ebarPop .7s ease-out;}
+  @keyframes ebarPop{0%{transform:scale(1); box-shadow:0 0 0 0 transparent;}
+    20%{transform:scale(1.09); box-shadow:0 0 16px 3px var(--pu,#ffd23f), 0 0 30px var(--pu,#ffd23f);}
+    100%{transform:scale(1); box-shadow:0 0 0 0 transparent;}}
+  .ebar::after{content:""; position:absolute; top:0; bottom:0; left:0; width:45%; pointer-events:none;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,.95), transparent);
+    transform:translateX(-160%); opacity:0; mix-blend-mode:screen; z-index:2;}
+  .ebar.powerup::after{animation:ebarShine .7s ease-out;}
+  @keyframes ebarShine{0%{transform:translateX(-160%); opacity:0;}
+    15%{opacity:1;} 100%{transform:translateX(330%); opacity:0;}}
+  .estat{display:flex; justify-content:space-between; font-size:14px; font-weight:bold;
+    text-shadow:1px 1px 0 #000; opacity:.95;}
+  #np-right .estat{flex-direction:row-reverse;}
+
+  .supporters{font-size:13px; opacity:.85; height:18px; overflow:hidden; text-shadow:1px 1px 0 #000;}
+
+  /* ---------- sprite + aura ---------- */
+  /* margin-bottom = hueco que antes dejaba la nameplate (ahora absoluta) para conservar la altura del sprite */
+  .charbox{position:relative; width:min(34vw,420px); height:46vh; display:flex;
+    align-items:flex-end; justify-content:center; margin-bottom:20.3vh;}
+  /* acercar un poco los dos rivales hacia el centro (stream vertical) */
+  #box-left{transform:translateX(3.5vw);}
+  #box-right{transform:translateX(-3.5vw);}
+  .aura{position:absolute; left:50%; top:55%; width:120%; height:120%;
+    transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
+    background:radial-gradient(closest-side, var(--glow) 0%, transparent 72%);
+    opacity:0; filter:blur(6px); transition:opacity .4s, background .4s;
+    animation:auraPulse 1.4s ease-in-out infinite;}
+  @keyframes auraPulse{50%{transform:translate(-50%,-50%) scale(1.06)}}
+  /* monigote (cuerpo SVG + cara = foto de perfil) */
+  .monigote{position:relative; z-index:2; width:min(30vw,360px); height:46vh;
+    display:flex; align-items:flex-end; justify-content:center;}
+  .mon-svg{height:100%; width:auto; overflow:visible; transition:filter .4s;
+    animation:bob 2.6s ease-in-out infinite; transform-origin:50% 100%;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .charbox.charging .mon-svg{animation:bobFast .45s ease-in-out infinite;}
+  @keyframes bobFast{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.03)}}
+  .sprite-layer{transform-box:fill-box; transform-origin:50% 100%;}
+  .sprite-layer.sprite-bob{animation:bob 2.6s ease-in-out infinite;}
+  .charbox.charging .sprite-layer.sprite-bob{animation:bobFast .45s ease-in-out infinite;}
+  .mon-svg image{filter:saturate(1.05);}
+  .mon-svg .arms-charge, .mon-svg .kiball{display:none;}
+  .charbox.charging .mon-svg .arms-idle{display:none;}
+  .charbox.charging .mon-svg .arms-charge{display:block;}
+  .charbox.charging .mon-svg .kiball{display:block;}
+  .mon-svg .kiball circle{transform-box:fill-box; transform-origin:center;
+    animation:kipulse .5s ease-in-out infinite;}
+  @keyframes kipulse{0%,100%{transform:scale(.85); opacity:.85}50%{transform:scale(1.3); opacity:1}}
+
+  /* partículas de energía subiendo */
+  .particles{position:absolute; left:50%; bottom:0; width:60%; height:80%;
+    transform:translateX(-50%); pointer-events:none; z-index:1; opacity:0; transition:opacity .4s;}
+  .particles span{position:absolute; bottom:0; width:6px; height:6px; border-radius:50%;
+    background:var(--glow); box-shadow:0 0 8px var(--glow); animation:rise 1.6s linear infinite;}
+  @keyframes rise{0%{transform:translateY(0) scale(1); opacity:0}
+    20%{opacity:1}100%{transform:translateY(-46vh) scale(.2); opacity:0}}
+
+  /* lightning para fases altas */
+  .charbox.lightning::before, .charbox.lightning::after{content:""; position:absolute;
+    inset:-6% -10%; z-index:3; pointer-events:none; border-radius:50%;
+    background:repeating-conic-gradient(from 0deg, transparent 0deg 18deg, rgba(255,255,255,.12) 19deg 20deg);
+    mix-blend-mode:screen; animation:spark .18s steps(2) infinite; opacity:.0;}
+  .charbox.charged.lightning::before{opacity:.14;}
+  @keyframes spark{50%{transform:rotate(8deg)}}
+
+  /* transformación: destello radial + onda expansiva (sin recuadro) */
+  .flash{position:absolute; left:50%; top:50%; width:0; height:0; z-index:30; pointer-events:none;}
+  .flash::before, .flash::after{content:""; position:absolute; left:0; top:0;
+    transform:translate(-50%,-50%) scale(.2); border-radius:50%; opacity:0;}
+  .flash::before{width:64vh; height:64vh;
+    background:radial-gradient(circle, rgba(255,255,255,.98) 0%, rgba(255,255,255,.5) 22%, rgba(255,255,255,0) 52%);}
+  .flash::after{width:26vh; height:26vh; border:0.7vh solid var(--glow); box-shadow:0 0 4vh var(--glow);}
+  .flash.go::before{animation:flashBurst .6s ease-out;}
+  .flash.go::after{animation:flashRing .7s ease-out;}
+  @keyframes flashBurst{0%{opacity:0; transform:translate(-50%,-50%) scale(.2)}
+    16%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(1.5)}}
+  @keyframes flashRing{0%{opacity:0; transform:translate(-50%,-50%) scale(.1)}
+    12%{opacity:.95} 100%{opacity:0; transform:translate(-50%,-50%) scale(3)}}
+  /* pilar de energía vertical (rayo de poder hacia arriba) */
+  .flash .fx-pillar{position:absolute; left:0; top:0; transform:translate(-50%,-50%) scaleY(.1);
+    width:13vh; height:120vh; opacity:0; border-radius:50%; pointer-events:none; mix-blend-mode:screen;
+    background:linear-gradient(to top, transparent, var(--glow) 22%, #fff 50%, var(--glow) 78%, transparent);
+    filter:blur(3px);}
+  .flash.go .fx-pillar{animation:fxPillar .65s ease-out;}
+  @keyframes fxPillar{0%{opacity:0; transform:translate(-50%,-50%) scaleY(.1)}
+    26%{opacity:.95; transform:translate(-50%,-50%) scaleY(1)}
+    100%{opacity:0; transform:translate(-50%,-50%) scaleY(1.12)}}
+  /* segunda onda blanca, con leve retardo */
+  .flash .fx-ring2{position:absolute; left:0; top:0; transform:translate(-50%,-50%) scale(.1);
+    width:30vh; height:30vh; border-radius:50%; border:0.5vh solid #fff; opacity:0; pointer-events:none;}
+  .flash.go .fx-ring2{animation:fxRing2 .8s ease-out .08s;}
+  @keyframes fxRing2{0%{opacity:0; transform:translate(-50%,-50%) scale(.1)}
+    14%{opacity:.8} 100%{opacity:0; transform:translate(-50%,-50%) scale(3.4)}}
+  .charbox.transform .mon-svg,
+  .charbox.transform .sprite-layer{animation:power 0.7s ease-out;}
+  @keyframes power{0%{transform:scale(1)}25%{transform:scale(1.12)}55%{transform:scale(.98)}100%{transform:scale(1)}}
+
+  /* ---------- victoria ---------- */
+  .victory{position:absolute; inset:0; z-index:40; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; background:rgba(0,0,0,.62);}
+  .victory.show{display:flex; animation:fadeIn .5s;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .victory h1{font-size:74px; font-style:italic; text-shadow:0 0 24px currentColor, 3px 3px 0 #000;}
+  .victory .vmon{height:48vh;}
+  .victory .vmon svg{height:100%; width:auto;}
+  .victory .vsub{font-size:26px; font-weight:bold; text-shadow:2px 2px 0 #000;}
+
+  /* ---------- simulador ---------- */
+  #sim{position:absolute; right:10px; top:10px; z-index:50; width:280px;
+    background:rgba(10,12,22,.92); border:1px solid rgba(255,255,255,.15); border-radius:12px;
+    padding:12px; font-size:13px; display:flex; flex-direction:column; gap:8px;}
+  #sim h3{font-size:14px; margin-bottom:2px;}
+  #sim .row{display:flex; gap:6px;}
+  #sim select,#sim input,#sim button{font:inherit; padding:5px 7px; border-radius:7px;
+    border:1px solid rgba(255,255,255,.2); background:#161a2b; color:#fff;}
+  #sim select option.unavailable{color:#ff4b4b; background:#241116;}
+  #sim button{cursor:pointer; background:#222a44;}
+  #sim button:hover{background:#2e3a63;}
+  #sim .lbl{opacity:.7; font-size:11px; text-transform:uppercase; letter-spacing:.5px;}
+  body.obs #sim{display:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bg"></div><div class="stars"></div>
+  <canvas id="clash"></canvas>
+  <div class="feed-side" id="feed-left"></div>
+  <div class="feed-side" id="feed-right"></div>
+
+  <!-- scouters: nivel de KI de cada luchador (estilo Dragon Ball) -->
+  <div class="scouter" id="scouter-left">
+    <div class="lens">
+      <div class="sc-top"><span class="sc-tag">PODER</span><i class="sc-dot"></i></div>
+      <div class="sc-readout"><span class="sc-ki" id="ki-left">0</span><span class="sc-unit">KI</span></div>
+      <div class="sc-user" id="sc-user-left"></div>
+      <div class="sc-bars" id="ki-bars-left"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <span class="sc-scan"></span>
+    </div>
+  </div>
+  <div class="scouter" id="scouter-right">
+    <div class="lens">
+      <div class="sc-top"><span class="sc-tag">PODER</span><i class="sc-dot"></i></div>
+      <div class="sc-readout"><span class="sc-ki" id="ki-right">0</span><span class="sc-unit">KI</span></div>
+      <div class="sc-user" id="sc-user-right"></div>
+      <div class="sc-bars" id="ki-bars-right"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <span class="sc-scan"></span>
+    </div>
+  </div>
+
+  <div class="stage">
+    <!-- IZQUIERDA -->
+    <div class="fighter left" id="f-left">
+      <div class="charbox" id="box-left">
+        <div class="particles" id="part-left"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="aura" id="aura-left"></div>
+        <div class="monigote" id="mon-left"></div>
+        <div class="flash" id="flash-left"><span class="fx-pillar"></span><span class="fx-ring2"></span></div>
+      </div>
+    </div>
+
+    <!-- CENTRO -->
+    <div class="center">
+      <div class="timer-row">
+        <div class="timer-avatar empty" id="timer-av-left">?</div>
+        <div class="timer" id="timer">05:00</div>
+        <div class="timer-avatar empty" id="timer-av-right">?</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="feed" id="feed"></div>
+    </div>
+
+    <!-- DERECHA -->
+    <div class="fighter right" id="f-right">
+      <div class="charbox" id="box-right">
+        <div class="particles" id="part-right"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="aura" id="aura-right"></div>
+        <div class="monigote" id="mon-right"></div>
+        <div class="flash" id="flash-right"><span class="fx-pillar"></span><span class="fx-ring2"></span></div>
+      </div>
+    </div>
+
+    <!-- barras (se posicionan abajo y se tocan en el centro) -->
+    <div class="nameplate" id="np-left">
+      <div class="who"><img class="avatar" id="av-left" style="display:none"><span class="cname" id="name-left">—</span></div>
+      <div class="phase" id="phase-left"></div>
+      <div class="ebar"><div class="efill" id="fill-left" style="background:var(--left)"></div></div>
+      <div class="estat"><span id="en-left">0</span><span id="next-left"></span></div>
+      <div class="supporters" id="sup-left"></div>
+    </div>
+    <div class="nameplate" id="np-right">
+      <div class="who"><img class="avatar" id="av-right" style="display:none"><span class="cname" id="name-right">—</span></div>
+      <div class="phase" id="phase-right"></div>
+      <div class="ebar"><div class="efill" id="fill-right" style="background:var(--right)"></div></div>
+      <div class="estat"><span id="en-right">0</span><span id="next-right"></span></div>
+      <div class="supporters" id="sup-right"></div>
+    </div>
+  </div>
+
+  <div class="victory" id="victory">
+    <h1 id="v-title">¡GANADOR!</h1>
+    <div class="vmon" id="v-mon"></div>
+    <div class="vsub" id="v-sub"></div>
+  </div>
+
+  <!-- Simulador (se oculta con ?obs=1 o tecla 0) -->
+  <div id="sim">
+    <h3>Simulador (pruebas)</h3>
+    <div class="lbl">Personaje izquierda</div>
+    <div class="row"><select id="sim-left"></select><button onclick="simPick('left')">Sale</button></div>
+    <div class="lbl">Personaje derecha</div>
+    <div class="row"><select id="sim-right"></select><button onclick="simPick('right')">Sale</button></div>
+    <div class="lbl">Añadir energía (regalo)</div>
+    <div class="row">
+      <button onclick="simGift('left',50)">+50 ◄</button>
+      <button onclick="simGift('left',500)">+500 ◄</button>
+      <button onclick="simGift('right',50)">► +50</button>
+      <button onclick="simGift('right',500)">► +500</button>
+    </div>
+    <div class="row">
+      <button onclick="simGiftCustom('left')">+ ◄</button>
+      <input id="sim-energy" type="number" min="1" step="1" placeholder="KI" style="width:72px">
+      <button onclick="simGiftCustom('right')">► +</button>
+    </div>
+    <div class="lbl">Temporizador</div>
+    <div class="row">
+      <input id="sim-mins" type="number" value="5" min="1" style="width:60px"> min
+      <button onclick="startTimer()">Iniciar</button>
+      <button onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====================== CONFIG ====================== */
+// Escaleras de transformación: cada fase tiene umbral de energía (at), nombre,
+// color de aura (glow), multiplicador de energía entrante (mult) y si tiene rayos.
+const LADDERS = {
+  saiyan: [
+    {name:'Base',               at:0,    glow:'#cfd8ff', mult:1.0, lightning:false},
+    {name:'Super Saiyan',       at:100,  glow:'#ffd23f', mult:1.1, lightning:false},
+    {name:'Super Saiyan 2',     at:500,  glow:'#ffdd33', mult:1.2, lightning:true},
+    {name:'Super Saiyan 3',     at:1000, glow:'#ffe24d', mult:1.3, lightning:true},
+    {name:'Super Saiyan God',   at:2000, glow:'#ff3b6b', mult:1.45,lightning:false},
+    {name:'Super Saiyan Blue',  at:3500, glow:'#33c4ff', mult:1.6, lightning:true},
+  ],
+  frieza: [
+    {name:'1ª forma',     at:0,    glow:'#cfd8ff', mult:1.0, lightning:false},
+    {name:'2ª forma',     at:100,  glow:'#d8a0ff', mult:1.1, lightning:false},
+    {name:'3ª forma',     at:500,  glow:'#b56bff', mult:1.2, lightning:false},
+    {name:'4ª forma',     at:1000, glow:'#a855f7', mult:1.35,lightning:false},
+    {name:'Freezer mecanizado', at:2500, glow:'#9aa0b5', mult:1.5, lightning:true},
+    {name:'Golden Freezer', at:6000, glow:'#ffd23f', mult:1.7, lightning:true},
+  ],
+  buu: [
+    {name:'boo1',   at:0,    glow:'#ffc0e8', mult:1.0, lightning:false},
+    {name:'boo2',   at:300,  glow:'#ff7ad9', mult:1.2, lightning:false},
+    {name:'boo3',   at:900,  glow:'#ff5fcf', mult:1.4, lightning:true},
+    {name:'kidboo', at:1800, glow:'#ff2db4', mult:1.6, lightning:true},
+  ],
+  generic: [
+    {name:'Base',        at:0,    glow:'#cfd8ff', mult:1.0, lightning:false},
+    {name:'Furia',       at:100,  glow:'#ffd23f', mult:1.15,lightning:false},
+    {name:'Poder máx.',  at:500,  glow:'#ff8a3b', mult:1.3, lightning:true},
+    {name:'Definitivo',  at:1500, glow:'#ff3b6b', mult:1.5, lightning:true},
+  ],
+};
+
+// Personajes: a qué escalera pertenecen y el color de su equipo (barra).
+const ROSTER = {
+  'Goku':{ladder:'saiyan',team:'#ff7a00'}, 'Vegeta':{ladder:'saiyan',team:'#2d6cff'},
+  'Gohan':{ladder:'saiyan',team:'#7d3cff'}, 'Goten':{ladder:'saiyan',team:'#ff5fa2'},
+  'Trunks niño':{ladder:'saiyan',team:'#9b6bff'}, 'Trunks del futuro':{ladder:'saiyan',team:'#8e44ad'},
+  'Bardock':{ladder:'saiyan',team:'#c0392b'},
+  'Broly':{ladder:'saiyan',team:'#2ecc71'}, 'Vegito':{ladder:'saiyan',team:'#3b7bff'},
+  'Gogeta':{ladder:'saiyan',team:'#3b7bff'}, 'Gotenks':{ladder:'saiyan',team:'#ff5fa2'},
+  'Raditz':{ladder:'saiyan',team:'#8d5524'}, 'Nappa':{ladder:'saiyan',team:'#7f8c8d'},
+  'Turles':{ladder:'saiyan',team:'#6d4c41'}, 'Caulifla':{ladder:'saiyan',team:'#e84393'},
+  'Kale':{ladder:'saiyan',team:'#27ae60'}, 'Kefla':{ladder:'saiyan',team:'#16a085'},
+  'Pan':{ladder:'saiyan',team:'#ff9ff3'},
+  'Freezer':{ladder:'frieza',team:'#a855f7'}, 'Cooler':{ladder:'frieza',team:'#6c5ce7'},
+  'Cell':{ladder:'generic',team:'#27ae60'}, 'Majin Buu':{ladder:'buu',team:'#ff7ad9'},
+  'Black':{ladder:'saiyan',team:'#e84393'}, 'Zamasu':{ladder:'generic',team:'#a29bfe'},
+  'Piccolo':{ladder:'generic',team:'#2ecc71'}, 'Krilin':{ladder:'generic',team:'#f39c12'},
+  'Ten Shin Han':{ladder:'generic',team:'#16a085'}, 'Yamcha':{ladder:'generic',team:'#c0392b'},
+  'Beerus':{ladder:'generic',team:'#9b59b6'}, 'Whis':{ladder:'generic',team:'#48dbfb'},
+  'Jiren':{ladder:'generic',team:'#e74c3c'}, 'Hit':{ladder:'generic',team:'#2c3e50'},
+  'Androide 17':{ladder:'generic',team:'#00b894'}, 'Androide 18':{ladder:'generic',team:'#0984e3'},
+  'Androide 19':{ladder:'generic',team:'#d35400'}, 'Androide 16':{ladder:'generic',team:'#e67e22'},
+  'Dr. Gero':{ladder:'generic',team:'#b33939'}, 'Maestro Roshi':{ladder:'generic',team:'#f1c40f'},
+  'Chaoz':{ladder:'generic',team:'#ecf0f1'}, 'Yajirobe':{ladder:'generic',team:'#e67e22'},
+  'Tao Pai Pai':{ladder:'generic',team:'#e84393'}, 'Bulma':{ladder:'generic',team:'#00cec9'},
+  'Chichi':{ladder:'generic',team:'#d6307c'},
+  'Shin':{ladder:'generic',team:'#b8a7ff'},
+  'Mr. Popo':{ladder:'generic',team:'#c0392b'}, 'Dende':{ladder:'generic',team:'#8bc34a'},
+  'Videl':{ladder:'generic',team:'#fd79a8'}, 'Mr. Satan':{ladder:'generic',team:'#d35400'},
+  'Dabra':{ladder:'generic',team:'#636e72'}, 'Babidi':{ladder:'generic',team:'#f39c12'},
+  'Spopovic':{ladder:'generic',team:'#d6b15f'},
+  'Oolong':{ladder:'generic',team:'#ff9f9f'}, 'Ginyu':{ladder:'generic',team:'#8e44ad'},
+  'Reecome':{ladder:'generic',team:'#d35400'},
+  'Janemba':{ladder:'generic',team:'#e056fd'},
+};
+function cfg(name){ return ROSTER[name] || {ladder:'generic', team:'#888'}; }
+function ladderOf(name){ return LADDERS[cfg(name).ladder] || LADDERS.generic; }
+
+function slug(t){ return (t||'').toLowerCase()
+  .normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[.'’\-\s]/g,'').replace(/[^a-z0-9]/g,''); }
+function phaseSlug(n){ return slug(n); }
+
+/* ====================== ESTADO ====================== */
+const GIFT_DEFAULT = 10;     // energía si un regalo no trae valor en coins
+let DURATION = 300;          // segundos del temporizador
+const sides = {
+  left:  {name:null, energy:0, phase:0, supporters:[]},
+  right: {name:null, energy:0, phase:0, supporters:[]},
+};
+const userTeam = {};         // username -> 'left'|'right'
+let timer = DURATION, timerId = null, running = false, ended = false;
+
+/* ====================== RENDER ====================== */
+function fmt(s){ const m=Math.floor(s/60), x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+
+// ---------- monigote: cuerpo chibi en SVG, cabeza = foto de perfil ----------
+function monigoteSVG(s){
+  return `
+<svg class="mon-svg" viewBox="0 0 240 340" id="svg-${s}" preserveAspectRatio="xMidYMax meet">
+  <defs>
+    <clipPath id="clip-${s}"><circle cx="92" cy="66" r="34"/></clipPath>
+  </defs>
+
+  <g id="drawn-${s}">
+  <!-- pierna trasera -->
+  <path d="M96 186 L50 296" fill="none" stroke="#0c1430" stroke-width="23" stroke-linecap="round"/>
+  <path d="M93 188 L49 294" fill="none" stroke="#26356a" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+  <!-- pierna delantera -->
+  <path d="M110 184 L132 236 L150 296" fill="none" stroke="#0a1126" stroke-width="24" stroke-linecap="round"/>
+  <path d="M107 186 L129 236 L147 294" fill="none" stroke="#26356a" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <!-- botas -->
+  <g transform="rotate(-20 56 300)">
+    <rect x="32" y="286" width="48" height="24" rx="9" fill="#f4f4f4"/>
+    <rect x="32" y="300" width="48" height="10" rx="5" fill="#c2c5cf"/>
+    <rect x="32" y="286" width="11" height="24" fill="#cf3b3b"/>
+  </g>
+  <rect x="134" y="286" width="50" height="24" rx="9" fill="#f4f4f4"/>
+  <rect x="134" y="300" width="50" height="10" rx="5" fill="#c2c5cf"/>
+  <rect x="134" y="286" width="11" height="24" fill="#cf3b3b"/>
+
+  <!-- cuello -->
+  <rect x="84" y="92" width="16" height="20" fill="#e0a875"/>
+  <rect x="95" y="92" width="5" height="20" fill="#000" opacity="0.18"/>
+
+  <!-- torso (gi) con sombra, luz, solapa, camiseta y fajín -->
+  <path id="gi-${s}" d="M66 102 Q92 88 120 100 L132 178 Q98 194 76 178 Z" fill="#ff7a00"/>
+  <path d="M120 100 L132 178 Q112 190 100 189 L110 108 Z" fill="#000" opacity="0.17"/>
+  <path d="M66 102 Q78 95 94 97 L90 150 L74 158 Z" fill="#fff" opacity="0.16"/>
+  <path d="M86 99 L114 150 L99 184" fill="none" stroke="#000" stroke-opacity="0.22" stroke-width="5"/>
+  <path d="M83 99 L98 138 L113 99 Z" fill="#10203f"/>
+  <path d="M93 116 L97 172" stroke="#000" stroke-opacity="0.10" stroke-width="3" fill="none"/>
+  <path d="M74 168 L134 162 L137 186 L77 192 Z" fill="#26356a"/>
+  <path d="M74 168 L134 162 L135 171 L75 177 Z" fill="#33458a"/>
+  <path d="M118 186 L126 232 L110 224 Z" fill="#26356a"/>
+  <path d="M122 186 L128 230 L136 218 Z" fill="#1f2c58"/>
+
+  <!-- brazos (mangas del gi) -->
+  <g id="arms-${s}" stroke="#ff7a00" stroke-width="20" stroke-linecap="round">
+    <line x1="106" y1="108" x2="160" y2="128"/>
+    <line x1="100" y1="126" x2="158" y2="146"/>
+  </g>
+  <line x1="108" y1="104" x2="158" y2="123" stroke="#fff" stroke-opacity="0.18" stroke-width="6" stroke-linecap="round"/>
+  <!-- antebrazos -->
+  <line x1="150" y1="126" x2="202" y2="138" stroke="#e0a875" stroke-width="15" stroke-linecap="round"/>
+  <line x1="150" y1="145" x2="202" y2="151" stroke="#e0a875" stroke-width="15" stroke-linecap="round"/>
+  <line x1="152" y1="123" x2="200" y2="134" stroke="#f3c79a" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"/>
+  <!-- muñequeras -->
+  <rect x="150" y="120" width="13" height="20" rx="3" fill="#26356a" transform="rotate(14 156 130)"/>
+  <rect x="150" y="139" width="13" height="20" rx="3" fill="#26356a" transform="rotate(7 156 149)"/>
+  <!-- manos / guantes -->
+  <circle cx="204" cy="138" r="13" fill="#f4f4f4"/>
+  <circle cx="204" cy="152" r="13" fill="#f4f4f4"/>
+  <path d="M205 126 a13 13 0 0 1 0 26" fill="#000" opacity="0.12"/>
+
+  <!-- pelo real (PNG por fase, detrás de la cabeza) -->
+  <image id="hairimg-${s}" x="0" y="0" width="10" height="10" preserveAspectRatio="xMidYMid meet" style="display:none"/>
+
+  <!-- cabeza = foto -->
+  <circle cx="92" cy="66" r="38" fill="#0c0e16"/>
+  <circle cx="92" cy="66" r="36" fill="#11131d" stroke="#fff" stroke-width="3"/>
+  <text id="init-${s}" x="92" y="78" text-anchor="middle" font-size="32" fill="#fff" font-family="Trebuchet MS, sans-serif">?</text>
+  <image id="face-${s}" x="58" y="32" width="68" height="68" clip-path="url(#clip-${s})" preserveAspectRatio="xMidYMid slice" style="display:none"/>
+  <circle cx="92" cy="66" r="36" fill="none" stroke="#fff" stroke-width="2.5"/>
+  </g>
+
+  <!-- sprite de personaje completo; oculto salvo que el personaje tenga sprites -->
+  <g id="sprite-${s}" class="sprite-layer">
+    <image id="charsprite-${s}" x="0" y="0" width="10" height="10" preserveAspectRatio="xMidYMax meet" style="display:none"/>
+    <!-- punto invisible de emisión del rayo (lo mide el shader) -->
+    <circle id="firePoint-${s}" cx="208" cy="145" r="2" fill="#000" fill-opacity="0"/>
+  </g>
+
+  <!-- rayos eléctricos SS2+ (encima del personaje, monigote o sprite) -->
+  <g id="lightning-${s}" style="display:none"></g>
+</svg>`;
+}
+function injectMonigote(side){ document.getElementById('mon-'+side).innerHTML = monigoteSVG(side); }
+
+function setFace(side, url, label){
+  const img = document.getElementById('face-'+side);
+  const init = document.getElementById('init-'+side);
+  if(!img) return;
+  if(url){
+    img.setAttribute('href', url);
+    img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url);
+    img.style.display=''; if(init) init.style.display='none';
+    img.onerror = ()=>{ img.style.display='none';
+      if(init){ init.style.display=''; init.textContent=(label||'?').slice(0,1).toUpperCase(); } };
+  } else {
+    img.removeAttribute('href'); img.style.display='none';
+    if(init){ init.style.display=''; init.textContent=(label||'?').slice(0,1).toUpperCase(); }
+  }
+}
+function setTimerAvatar(side){
+  const s = sides[side];
+  const el = document.getElementById('timer-av-'+side);
+  if(!el) return;
+  const label = (s.user || s.name || '?').slice(0,1).toUpperCase();
+  if(s.name && s.face){
+    el.classList.remove('empty');
+    el.innerHTML = '<img src="'+s.face.replace(/"/g,'&quot;')+'" alt="">';
+    const img = el.querySelector('img');
+    if(img) img.onerror = ()=>{ el.textContent = label; };
+  } else if(s.name){
+    el.classList.remove('empty');
+    el.textContent = label;
+  } else {
+    el.classList.add('empty');
+    el.textContent = '?';
+  }
+}
+
+/* ---- sombreado de color + rayos eléctricos (SS2+) ---- */
+function shadeHex(hex, amt){
+  const c = clashHex(hex); const tw = amt<0 ? 0 : 1; const k = Math.abs(amt);
+  const m = v => Math.round((v + (tw - v)*k)*255);
+  return 'rgb('+m(c[0])+','+m(c[1])+','+m(c[2])+')';
+}
+function hairColors(s, ph){
+  if(s.name && s.phase>0) return {sh:shadeHex(ph.glow,-0.5), base:ph.glow, hi:shadeHex(ph.glow,0.55)};
+  return {sh:'#0c0c12', base:'#1b1b24', hi:'#34343f'};
+}
+const SVGNS = 'http://www.w3.org/2000/svg';
+function jbolt(cx,cy,rs){
+  rs = rs || 1;
+  const a=Math.random()*Math.PI*2; const r0=(32+Math.random()*26)*rs;
+  let x=cx+Math.cos(a)*r0, y=cy+Math.sin(a)*r0*1.25;
+  let d='M'+x.toFixed(1)+' '+y.toFixed(1);
+  const steps=3+(Math.random()*3|0), rEnd=r0+(44+Math.random()*78)*rs;
+  for(let i=1;i<=steps;i++){ const r=r0+(rEnd-r0)*(i/steps); const aa=a+(Math.random()-0.5)*0.6;
+    const px=cx+Math.cos(aa)*r+(Math.random()-0.5)*16*rs, py=cy+Math.sin(aa)*r*1.25+(Math.random()-0.5)*16*rs;
+    d+=' L'+px.toFixed(1)+' '+py.toFixed(1); }
+  return d;
+}
+function updateLightning(side){
+  const s=sides[side], g=document.getElementById('lightning-'+side);
+  if(!g) return;
+  while(g.firstChild) g.removeChild(g.firstChild);
+  const ph = s.name ? ladderOf(s.name)[s.phase] : null;
+  if(!ph || !ph.lightning){ g.style.display='none'; return; }
+  g.style.display='';
+  const glow = ph.glow;
+  // si es sprite, los rayos van más grandes y centrados en el cuerpo del sprite
+  const isSprite = !!(SPRITES[s.name] && SPRITES[s.name][ph.name]);
+  const lcx = isSprite ? 134 : 110, lcy = isSprite ? 232 : 176, lrs = isSprite ? 1.5 : 1;
+  const n = (isSprite?5:4)+(Math.random()*3|0);
+  for(let i=0;i<n;i++){
+    const d=jbolt(lcx,lcy,lrs);
+    for(const spec of [[glow,'7','0.35'],[glow,'4','0.7'],['#ffffff','1.8','1']]){
+      const p=document.createElementNS(SVGNS,'path');
+      p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke',spec[0]);
+      p.setAttribute('stroke-width',spec[1]); p.setAttribute('stroke-linejoin','round');
+      p.setAttribute('stroke-linecap','round'); p.setAttribute('opacity',spec[2]);
+      g.appendChild(p);
+    }
+  }
+}
+let lightningTimer=null;
+function startLightning(){ if(lightningTimer) return;
+  lightningTimer=setInterval(()=>{ updateLightning('left'); updateLightning('right'); }, 75); }
+
+// pelo real por fase: file + tamaño intrínseco (para conservar proporción)
+const HAIR_BY_PHASE = {
+  'Base':{file:'hair-base',iw:373,ih:295},
+  'Super Saiyan':{file:'hair-ssj1',iw:302,ih:319},
+  'Super Saiyan 2':{file:'hair-ssj2',iw:360,ih:347},
+  'Super Saiyan 3':{file:'hair-ssj3',iw:399,ih:670},
+  'Super Saiyan God':{file:'hair-god',iw:422,ih:354},
+  'Super Saiyan Blue':{file:'hair-blue',iw:480,ih:360},
+  'Ultra Instinct':{file:'hair-ui',iw:542,ih:680},
+};
+// colocación en coords del viewBox (cabeza en 92,66 r36). Ajustable.
+const HAIR_POS = {
+  'hair-base':{w:124,x:30,y:-2},
+  'hair-ssj1':{w:150,x:0,y:-60},
+  'hair-ssj2':{w:172,x:-24,y:-72},
+  'hair-ssj3':{w:158,x:-40,y:-48},
+  'hair-god':{w:152,x:22,y:-28},
+  'hair-blue':{w:164,x:-34,y:-38},
+  'hair-ui':{w:184,x:-54,y:-52},
+};
+
+// personajes con sprite completo (sin foto). Por fase: fichero + tamaño + píxel de la mano.
+// normaliza por altura de cuerpo (pies->mano), ancla pies abajo y mano a la derecha,
+// así todas las fases salen del MISMO tamaño y el rayo del mismo punto.
+const SPR_T = { fh:172, baseY:344, handX:212, scMin:0.16, scMax:0.30 };
+const SPRITES = {
+  'Goku': {
+    'Base':{f:'goku-base',iw:1024,ih:1536,cx:0,cy:63,cw:941,ch:1279,hx:940,hy:595,scale:1.30,y:52},
+    'Super Saiyan':{f:'goku-ssj1',iw:1024,ih:1536,cx:0,cy:22,cw:963,ch:1277,hx:962,hy:568,scale:1.30,y:52},
+    'Super Saiyan 2':{f:'goku-ssj2',iw:1024,ih:1536,cx:2,cy:55,cw:987,ch:1441,hx:989,hy:717,scale:1.30,y:52},
+    'Super Saiyan 3':{f:'goku-ssj3',iw:1024,ih:1536,cx:20,cy:69,cw:935,ch:1048,hx:954,hy:503,scale:1.30,y:52},
+    'Super Saiyan God':{f:'goku-god',iw:1024,ih:1536,cx:29,cy:55,cw:916,ch:1187,hx:945,hy:535,scale:1.30,y:52},
+    'Super Saiyan Blue':{f:'goku-blue',iw:1024,ih:1536,cx:39,cy:68,cw:920,ch:1229,hx:958,hy:602,scale:1.30,y:52},
+  },
+  'Vegeta': {
+    'Base':{f:'vegeta-base',iw:1024,ih:1536,cx:0,cy:50,cw:987,ch:1341,hx:987,hy:574,scale:1.30,y:52},
+    'Super Saiyan':{f:'vegeta-ssj1',iw:1024,ih:1536,cx:0,cy:47,cw:983,ch:1306,hx:983,hy:549,scale:1.30,y:52},
+    'Super Saiyan 2':{f:'vegeta-ssj2',iw:1024,ih:1536,cx:0,cy:57,cw:949,ch:1297,hx:949,hy:548,scale:1.30,y:52},
+    'Super Saiyan 3':{f:'vegeta-ssj3',iw:1024,ih:1536,cx:56,cy:127,cw:931,ch:1160,hx:987,hy:545,scale:1.30,y:52},
+    'Super Saiyan God':{f:'vegeta-god',iw:1024,ih:1536,cx:0,cy:59,cw:1021,ch:1342,hx:1021,hy:588,scale:1.30,y:52},
+    'Super Saiyan Blue':{f:'vegeta-blue',iw:1024,ih:1024,cx:64,cy:38,cw:759,ch:939,hx:822,hy:428,scale:1.30,y:42},
+  },
+  'Gohan': {
+    'Base':{f:'gohan-base',iw:447,ih:493,cx:35,cy:43,cw:401,ch:433,hx:414,hy:172,scale:2.60,y:65,bob:true},
+    'Super Saiyan':{f:'gohan-ssj1',iw:384,ih:502,cx:0,cy:17,cw:349,ch:463,hx:332,hy:176,scale:2.60,y:65,bob:true},
+    'Super Saiyan 2':{f:'gohan-ssj2',iw:384,ih:502,cx:0,cy:17,cw:349,ch:463,hx:332,hy:176,scale:2.60,y:65,bob:true},
+    'Super Saiyan 3':{f:'gohan-ssj3',iw:452,ih:499,cx:40,cy:36,cw:392,ch:446,hx:410,hy:182,scale:2.60,y:62,bob:true},
+    'Super Saiyan God':{f:'gohan-god',iw:369,ih:518,cx:10,cy:35,cw:344,ch:457,hx:330,hy:178,scale:2.60,y:73,bob:true},
+    'Super Saiyan Blue':{f:'gohan-blue',iw:426,ih:517,cx:36,cy:0,cw:340,ch:482,hx:352,hy:178,scale:2.60,y:65,bob:true},
+  },
+  'Goten': {
+    'Base':{f:'goten-base',iw:543,ih:561,cx:45,cy:0,cw:498,ch:521,hx:470,hy:190,scale:1.60,y:-14,bob:true},
+    'Super Saiyan':{f:'goten-ssj1',iw:509,ih:547,cx:0,cy:0,cw:509,ch:547,hx:432,hy:205,scale:1.60,y:-8,bob:true},
+    'Super Saiyan 2':{f:'goten-ssj2',iw:515,ih:549,cx:0,cy:0,cw:515,ch:549,hx:438,hy:205,scale:1.60,y:-8,bob:true},
+    'Super Saiyan 3':{f:'goten-ssj3',iw:569,ih:512,cx:0,cy:0,cw:569,ch:512,hx:482,hy:205,scale:1.60,y:-25,bob:true},
+    'Super Saiyan God':{f:'goten-god',iw:474,ih:510,cx:0,cy:0,cw:474,ch:510,hx:396,hy:204,scale:1.60,y:-25,bob:true},
+    'Super Saiyan Blue':{f:'goten-blue',iw:503,ih:489,cx:0,cy:0,cw:503,ch:489,hx:425,hy:195,scale:1.60,y:-31,bob:true},
+  },
+  'Trunks niño': {
+    'Base':{f:'trunks-kid-base',iw:534,ih:535,cx:40,cy:14,cw:398,ch:521,hx:430,hy:180,scale:1.60,y:-2,bob:true},
+    'Super Saiyan':{f:'trunks-kid-ssj1',iw:503,ih:531,cx:50,cy:8,cw:397,ch:523,hx:420,hy:176,scale:1.60,y:-2,bob:true},
+    'Super Saiyan 2':{f:'trunks-kid-ssj2',iw:503,ih:519,cx:59,cy:11,cw:395,ch:508,hx:420,hy:176,scale:1.60,y:-7,bob:true},
+    'Super Saiyan 3':{f:'trunks-kid-ssj3',iw:480,ih:517,cx:35,cy:16,cw:396,ch:492,hx:410,hy:188,scale:1.60,y:-18,bob:true},
+    'Super Saiyan God':{f:'trunks-kid-god',iw:471,ih:501,cx:33,cy:0,cw:398,ch:492,hx:400,hy:178,scale:1.60,y:-21,bob:true},
+    'Super Saiyan Blue':{f:'trunks-kid-blue',iw:516,ih:508,cx:70,cy:0,cw:405,ch:499,hx:430,hy:178,scale:1.60,y:-18,bob:true},
+  },
+  'Trunks del futuro': {
+    'Base':{f:'trunksfuturobase',iw:382,ih:506,cx:11,cy:29,cw:357,ch:467,hx:360,hy:170,scale:2.54,y:76,bob:true},
+    'Super Saiyan':{f:'trunksfuturossj',iw:405,ih:515,cx:29,cy:14,cw:351,ch:486,hx:370,hy:170,scale:2.54,y:80,bob:true},
+    'Super Saiyan 2':{f:'trunksfuturossj2',iw:419,ih:517,cx:8,cy:0,cw:359,ch:499,hx:360,hy:174,scale:2.54,y:76,bob:true},
+    'Super Saiyan 3':{f:'trunksfuturossj3',iw:489,ih:481,cx:44,cy:1,cw:424,ch:480,hx:450,hy:178,scale:2.54,y:59,bob:true},
+    'Super Saiyan God':{f:'trunksfuturossjgod',iw:410,ih:508,cx:24,cy:17,cw:351,ch:484,hx:368,hy:174,scale:2.54,y:77,bob:true},
+    'Super Saiyan Blue':{f:'trunksfuturossjblue',iw:438,ih:493,cx:35,cy:6,cw:349,ch:480,hx:376,hy:174,scale:2.54,y:66,bob:true},
+  },
+  'Gotenks': {
+    'Base':{f:'gotenks-base',iw:571,ih:533,cx:60,cy:16,cw:379,ch:499,hx:390,hy:185,scale:1.70,y:-4,bob:true},
+    'Super Saiyan':{f:'gotenks-ssj1',iw:425,ih:553,cx:27,cy:6,cw:366,ch:504,hx:372,hy:184,scale:1.70,y:-6,bob:true},
+    'Super Saiyan 2':{f:'gotenks-ssj2',iw:524,ih:525,cx:102,cy:7,cw:367,ch:503,hx:395,hy:180,scale:1.70,y:-4,bob:true},
+    'Super Saiyan 3':{f:'gotenks-ssj3',iw:560,ih:515,cx:41,cy:5,cw:415,ch:503,hx:400,hy:182,scale:1.70,y:-6,bob:true},
+    'Super Saiyan God':{f:'gotenks-god',iw:446,ih:516,cx:50,cy:0,cw:363,ch:509,hx:370,hy:184,scale:1.70,y:-6,bob:true},
+    'Super Saiyan Blue':{f:'gotenks-blue',iw:462,ih:507,cx:61,cy:0,cw:367,ch:500,hx:380,hy:180,scale:1.70,y:-9,bob:true},
+  },
+  'Broly': {
+    'Base':{f:'broly-base',iw:548,ih:520,cx:0,cy:10,cw:454,ch:510,hx:430,hy:185,scale:2.55,y:84,bob:true},
+    'Super Saiyan':{f:'broly-ssj1',iw:483,ih:520,cx:30,cy:4,cw:453,ch:508,hx:425,hy:185,scale:2.55,y:78,bob:true},
+    'Super Saiyan 2':{f:'broly-ssj2',iw:473,ih:526,cx:37,cy:7,cw:426,ch:510,hx:418,hy:185,scale:2.55,y:82,bob:true},
+    'Super Saiyan 3':{f:'broly-ssj3',iw:525,ih:542,cx:14,cy:15,cw:425,ch:513,hx:420,hy:190,scale:2.55,y:87,bob:true},
+    'Super Saiyan God':{f:'broly-god',iw:460,ih:532,cx:28,cy:7,cw:423,ch:525,hx:410,hy:185,scale:2.55,y:94,bob:true},
+    'Super Saiyan Blue':{f:'broly-blue',iw:450,ih:527,cx:22,cy:2,cw:426,ch:511,hx:405,hy:185,scale:2.55,y:79,bob:true},
+  },
+  'Bardock': {
+    'Base':{f:'bardock-base',iw:566,ih:549,cx:32,cy:14,cw:463,ch:529,hx:438,hy:190,scale:2.21,y:62,bob:true},
+    'Super Saiyan':{f:'bardock-ssj1',iw:472,ih:552,cx:8,cy:6,cw:457,ch:538,hx:420,hy:190,scale:2.21,y:63,bob:true},
+    'Super Saiyan 2':{f:'bardock-ssj2',iw:502,ih:569,cx:20,cy:5,cw:482,ch:538,hx:448,hy:190,scale:2.21,y:62,bob:true},
+    'Super Saiyan 3':{f:'bardock-ssj3',iw:567,ih:519,cx:47,cy:0,cw:453,ch:519,hx:440,hy:190,scale:2.21,y:46,bob:true},
+    'Super Saiyan God':{f:'bardock-god',iw:473,ih:517,cx:13,cy:10,cw:451,ch:507,hx:420,hy:190,scale:2.21,y:45,bob:true},
+    'Super Saiyan Blue':{f:'bardock-blue',iw:498,ih:516,cx:29,cy:0,cw:452,ch:516,hx:442,hy:190,scale:2.21,y:44,bob:true},
+  },
+  'Nappa': {
+    'Base':{f:'nappa-base',iw:626,ih:800,cx:55,cy:54,cw:550,ch:706,hx:520,hy:245,scale:1.69,y:89,bob:true},
+    'Super Saiyan':{f:'nappa-ssj1',iw:557,ih:752,cx:8,cy:19,cw:540,ch:709,hx:500,hy:235,scale:1.69,y:78,bob:true},
+    'Super Saiyan 2':{f:'nappa-ssj2',iw:599,ih:770,cx:7,cy:42,cw:592,ch:710,hx:530,hy:245,scale:1.69,y:85,bob:true},
+    'Super Saiyan 3':{f:'nappa-ssj2',iw:599,ih:770,cx:7,cy:42,cw:592,ch:710,hx:530,hy:245,scale:1.69,y:85,bob:true},
+    'Super Saiyan God':{f:'nappa-ssj2',iw:599,ih:770,cx:7,cy:42,cw:592,ch:710,hx:530,hy:245,scale:1.69,y:85,bob:true},
+    'Super Saiyan Blue':{f:'nappa-ssj2',iw:599,ih:770,cx:7,cy:42,cw:592,ch:710,hx:530,hy:245,scale:1.69,y:85,bob:true},
+  },
+  'Raditz': {
+    'Base':{f:'raditz-base',iw:624,ih:803,cx:19,cy:20,cw:566,ch:752,hx:535,hy:245,scale:1.69,y:95,bob:true},
+    'Super Saiyan':{f:'raditz-ssj1',iw:629,ih:791,cx:43,cy:13,cw:566,ch:750,hx:535,hy:245,scale:1.69,y:91,bob:true},
+    'Super Saiyan 2':{f:'raditz-ssj2',iw:632,ih:832,cx:49,cy:47,cw:563,ch:756,hx:535,hy:245,scale:1.69,y:111,bob:true},
+    'Super Saiyan 3':{f:'raditz-ssj2',iw:632,ih:832,cx:49,cy:47,cw:563,ch:756,hx:535,hy:245,scale:1.69,y:111,bob:true},
+    'Super Saiyan God':{f:'raditz-ssj2',iw:632,ih:832,cx:49,cy:47,cw:563,ch:756,hx:535,hy:245,scale:1.69,y:111,bob:true},
+    'Super Saiyan Blue':{f:'raditz-ssj2',iw:632,ih:832,cx:49,cy:47,cw:563,ch:756,hx:535,hy:245,scale:1.69,y:111,bob:true},
+  },
+  'Piccolo': {
+    'Base':{f:'piccolo-base',iw:501,ih:891,cx:0,cy:123,cw:490,ch:671,hx:444,hy:338,scale:1.62,y:50},
+    'Furia':{f:'piccolo-ssj1',iw:541,ih:764,cx:14,cy:42,cw:527,ch:695,hx:482,hy:224,scale:1.62,y:77},
+    'Poder máx.':{f:'piccolo-ssj2',iw:604,ih:1009,cx:0,cy:78,cw:560,ch:812,hx:516,hy:344,scale:1.485,y:71},
+    'Definitivo':{f:'piccolo-ssj2',iw:604,ih:1009,cx:0,cy:78,cw:560,ch:812,hx:516,hy:344,scale:1.485,y:71},
+  },
+  'Ten Shin Han': {
+    'Base':{f:'tenshinhan-base',iw:545,ih:922,cx:4,cy:83,cw:507,ch:747,hx:488,hy:265,scale:1.534,y:88},
+    'Furia':{f:'tenshinhan-ssj1',iw:558,ih:865,cx:30,cy:80,cw:496,ch:751,hx:492,hy:255,scale:1.534,y:92},
+    'Poder máx.':{f:'tenshinhan-ssj2',iw:569,ih:938,cx:5,cy:25,cw:546,ch:842,hx:505,hy:265,scale:1.534,y:92},
+    'Definitivo':{f:'tenshinhan-ssj2',iw:569,ih:938,cx:5,cy:25,cw:546,ch:842,hx:505,hy:265,scale:1.534,y:92},
+  },
+  'Yamcha': {
+    'Base':{f:'yamcha-base',iw:557,ih:829,cx:0,cy:36,cw:529,ch:734,hx:455,hy:275,scale:1.701,y:81},
+    'Furia':{f:'yamcha-ssj1',iw:590,ih:848,cx:6,cy:70,cw:497,ch:748,hx:468,hy:290,scale:1.701,y:97},
+    'Poder máx.':{f:'yamcha-ssj2',iw:593,ih:863,cx:5,cy:27,cw:565,ch:789,hx:460,hy:280,scale:1.701,y:102},
+    'Definitivo':{f:'yamcha-ssj2',iw:593,ih:863,cx:5,cy:27,cw:565,ch:789,hx:460,hy:280,scale:1.701,y:102},
+  },
+  'Krilin': {
+    'Base':{f:'krilin-base',iw:534,ih:689,cx:10,cy:61,cw:503,ch:602,hx:447,hy:238,scale:1.872,y:67},
+    'Furia':{f:'krilin-ssj1',iw:565,ih:720,cx:19,cy:43,cw:511,ch:644,hx:463,hy:243,scale:1.872,y:77},
+    'Poder máx.':{f:'krilin-ssj2',iw:532,ih:756,cx:15,cy:65,cw:517,ch:651,hx:452,hy:256,scale:1.872,y:86},
+    'Definitivo':{f:'krilin-ssj2',iw:532,ih:756,cx:15,cy:65,cw:517,ch:651,hx:452,hy:256,scale:1.872,y:86},
+  },
+  'Androide 16': {
+    'Base':{f:'android16-base',iw:473,ih:679,cx:21,cy:39,cw:429,ch:610,hx:430,hy:190,scale:2.366,y:124},
+    'Furia':{f:'android16-ssj1',iw:535,ih:677,cx:47,cy:35,cw:432,ch:610,hx:466,hy:185,scale:2.366,y:125},
+    'Poder máx.':{f:'android16-ssj2',iw:497,ih:660,cx:48,cy:33,cw:428,ch:610,hx:434,hy:185,scale:2.366,y:123},
+    'Definitivo':{f:'android16-ssj2',iw:497,ih:660,cx:48,cy:33,cw:428,ch:610,hx:434,hy:185,scale:2.366,y:123},
+  },
+  'Androide 17': {
+    'Base':{f:'android17-base',iw:500,ih:937,cx:3,cy:28,cw:497,ch:909,hx:420,hy:250,scale:1.728,y:125},
+    'Furia':{f:'android17-ssj1',iw:514,ih:876,cx:12,cy:24,cw:478,ch:828,hx:430,hy:242,scale:1.728,y:125},
+    'Poder máx.':{f:'android17-ssj2',iw:537,ih:876,cx:0,cy:18,cw:527,ch:846,hx:455,hy:245,scale:1.728,y:125},
+    'Definitivo':{f:'android17-ssj2',iw:537,ih:876,cx:0,cy:18,cw:527,ch:846,hx:455,hy:245,scale:1.728,y:125},
+  },
+  'Androide 18': {
+    'Base':{f:'android18-base',iw:480,ih:794,cx:21,cy:73,cw:439,ch:668,hx:410,hy:225,scale:1.95,y:130},
+    'Furia':{f:'android18-ssj1',iw:523,ih:743,cx:19,cy:46,cw:450,ch:679,hx:420,hy:215,scale:1.95,y:126},
+    'Poder máx.':{f:'android18-ssj2',iw:479,ih:746,cx:15,cy:40,cw:450,ch:689,hx:410,hy:215,scale:1.95,y:129},
+    'Definitivo':{f:'android18-ssj2',iw:479,ih:746,cx:15,cy:40,cw:450,ch:689,hx:410,hy:215,scale:1.95,y:129},
+  },
+  'Androide 19': {
+    'Base':{f:'android19-base',iw:614,ih:756,cx:2,cy:8,cw:563,ch:678,hx:515,hy:225,scale:1.625,y:53},
+    'Furia':{f:'android19-ssj1',iw:551,ih:694,cx:0,cy:5,cw:546,ch:674,hx:500,hy:220,scale:1.625,y:52},
+    'Poder máx.':{f:'android19-ssj2',iw:581,ih:694,cx:26,cy:8,cw:555,ch:680,hx:525,hy:225,scale:1.625,y:54},
+    'Definitivo':{f:'android19-ssj2',iw:581,ih:694,cx:26,cy:8,cw:555,ch:680,hx:525,hy:225,scale:1.625,y:54},
+  },
+  'Dr. Gero': {
+    'Base':{f:'drgero-base',iw:566,ih:768,cx:0,cy:42,cw:538,ch:676,hx:500,hy:230,scale:1.75,y:84},
+    'Furia':{f:'drgero-ssj1',iw:549,ih:736,cx:15,cy:42,cw:534,ch:676,hx:500,hy:230,scale:1.75,y:84},
+    'Poder máx.':{f:'drgero-ssj2',iw:614,ih:733,cx:29,cy:23,cw:571,ch:679,hx:555,hy:252,scale:1.75,y:64},
+    'Definitivo':{f:'drgero-ssj2',iw:614,ih:733,cx:29,cy:23,cw:571,ch:679,hx:555,hy:252,scale:1.75,y:64},
+  },
+  'Beerus': {
+    'Base':{f:'beerus-base',iw:494,ih:852,cx:14,cy:13,cw:431,ch:778,hx:405,hy:230,scale:1.73,y:109},
+    'Furia':{f:'beerus-ssj1',iw:503,ih:829,cx:13,cy:12,cw:477,ch:794,hx:425,hy:230,scale:1.73,y:116},
+    'Poder máx.':{f:'beerus-ssj2',iw:536,ih:851,cx:38,cy:6,cw:498,ch:828,hx:460,hy:230,scale:1.73,y:116},
+    'Definitivo':{f:'beerus-ssj2',iw:536,ih:851,cx:38,cy:6,cw:498,ch:828,hx:460,hy:230,scale:1.73,y:116},
+  },
+  'Dabra': {
+    'Base':{f:'dabra-base',iw:534,ih:740,cx:0,cy:30,cw:531,ch:666,hx:430,hy:210,scale:1.755,y:84},
+    'Furia':{f:'dabra-ssj1',iw:551,ih:762,cx:43,cy:47,cw:480,ch:680,hx:430,hy:210,scale:1.755,y:100},
+    'Poder máx.':{f:'dabra-ssj2',iw:546,ih:783,cx:22,cy:43,cw:524,ch:695,hx:430,hy:210,scale:1.755,y:106},
+    'Definitivo':{f:'dabra-ssj2',iw:546,ih:783,cx:22,cy:43,cw:524,ch:695,hx:430,hy:210,scale:1.755,y:106},
+  },
+  'Babidi': {
+    'Base':{f:'babidi-base',iw:609,ih:860,cx:0,cy:115,cw:581,ch:707,hx:555,hy:315,scale:1.20,y:11},
+    'Furia':{f:'babidi-ssj1',iw:596,ih:794,cx:0,cy:51,cw:594,ch:707,hx:555,hy:270,scale:1.20,y:4},
+    'Poder máx.':{f:'babidi-ssj2',iw:661,ih:895,cx:13,cy:131,cw:611,ch:716,hx:600,hy:325,scale:1.20,y:16},
+    'Definitivo':{f:'babidi-ssj2',iw:661,ih:895,cx:13,cy:131,cw:611,ch:716,hx:600,hy:325,scale:1.20,y:16},
+  },
+  'Spopovic': {
+    'Base':{f:'spopovic-base',iw:534,ih:849,cx:34,cy:33,cw:500,ch:795,hx:500,hy:310,scale:1.552,y:69},
+    'Furia':{f:'spopovic-ssj1',iw:520,ih:816,cx:17,cy:6,cw:494,ch:790,hx:485,hy:300,scale:1.552,y:59},
+    'Poder máx.':{f:'spopovic-ssj2',iw:574,ih:816,cx:36,cy:18,cw:507,ch:788,hx:520,hy:300,scale:1.552,y:64},
+    'Definitivo':{f:'spopovic-ssj2',iw:574,ih:816,cx:36,cy:18,cw:507,ch:788,hx:520,hy:300,scale:1.552,y:64},
+  },
+  'Oolong': {
+    'Base':{f:'oolong-base',iw:535,ih:723,cx:40,cy:30,cw:495,ch:683,hx:505,hy:270,scale:1.25,y:-6},
+    'Furia':{f:'oolong-ssj1',iw:507,ih:740,cx:7,cy:13,cw:492,ch:707,hx:480,hy:270,scale:1.25,y:-3},
+    'Poder máx.':{f:'oolong-ssj2',iw:556,ih:762,cx:22,cy:8,cw:506,ch:701,hx:520,hy:270,scale:1.25,y:-7},
+    'Definitivo':{f:'oolong-ssj2',iw:556,ih:762,cx:22,cy:8,cw:506,ch:701,hx:520,hy:270,scale:1.25,y:-7},
+  },
+  'Ginyu': {
+    'Base':{f:'ginyu-base',iw:644,ih:893,cx:15,cy:67,cw:531,ch:795,hx:535,hy:315,scale:1.43,y:63},
+    'Furia':{f:'ginyu-ssj1',iw:583,ih:833,cx:0,cy:28,cw:557,ch:796,hx:535,hy:300,scale:1.43,y:53},
+    'Poder máx.':{f:'ginyu-ssj2',iw:587,ih:867,cx:0,cy:23,cw:571,ch:801,hx:545,hy:300,scale:1.43,y:53},
+    'Definitivo':{f:'ginyu-ssj2',iw:587,ih:867,cx:0,cy:23,cw:571,ch:801,hx:545,hy:300,scale:1.43,y:53},
+  },
+  'Reecome': {
+    'Base':{f:'reecome-base',iw:587,ih:827,cx:14,cy:55,cw:573,ch:739,hx:555,hy:280,scale:1.512,y:61},
+    'Furia':{f:'reecome-ssj1',iw:566,ih:769,cx:0,cy:15,cw:536,ch:738,hx:520,hy:270,scale:1.512,y:47},
+    'Poder máx.':{f:'reecome-ssj2',iw:547,ih:806,cx:19,cy:30,cw:528,ch:738,hx:525,hy:270,scale:1.512,y:54},
+    'Definitivo':{f:'reecome-ssj2',iw:547,ih:806,cx:19,cy:30,cw:528,ch:738,hx:525,hy:270,scale:1.512,y:54},
+  },
+  'Maestro Roshi': {
+    'Base':{f:'roshi-base',iw:541,ih:757,cx:27,cy:53,cw:474,ch:657,hx:420,hy:230,scale:1.69,y:71},
+    'Furia':{f:'roshi-ssj1',iw:522,ih:770,cx:23,cy:76,cw:488,ch:660,hx:420,hy:230,scale:1.69,y:85},
+    'Poder máx.':{f:'roshi-ssj2',iw:552,ih:724,cx:36,cy:49,cw:516,ch:674,hx:435,hy:230,scale:1.69,y:78},
+    'Definitivo':{f:'roshi-ssj2',iw:552,ih:724,cx:36,cy:49,cw:516,ch:674,hx:435,hy:230,scale:1.69,y:78},
+  },
+  'Chaoz': {
+    'Base':{f:'chaoz-base',iw:537,ih:692,cx:14,cy:47,cw:494,ch:592,hx:455,hy:205,scale:1.25,y:-9},
+    'Furia':{f:'chaoz-ssj1',iw:512,ih:655,cx:13,cy:37,cw:494,ch:597,hx:450,hy:200,scale:1.25,y:-9},
+    'Poder máx.':{f:'chaoz-ssj2',iw:520,ih:642,cx:7,cy:36,cw:502,ch:598,hx:455,hy:200,scale:1.25,y:-9},
+    'Definitivo':{f:'chaoz-ssj2',iw:520,ih:642,cx:7,cy:36,cw:502,ch:598,hx:455,hy:200,scale:1.25,y:-9},
+  },
+  'Yajirobe': {
+    'Base':{f:'yajirobe-base',iw:564,ih:703,cx:21,cy:35,cw:519,ch:645,hx:480,hy:215,scale:1.625,y:55},
+    'Furia':{f:'yajirobe-ssj1',iw:554,ih:704,cx:0,cy:31,cw:534,ch:645,hx:485,hy:215,scale:1.625,y:53},
+    'Poder máx.':{f:'yajirobe-ssj2',iw:549,ih:691,cx:34,cy:26,cw:512,ch:645,hx:480,hy:215,scale:1.625,y:50},
+    'Definitivo':{f:'yajirobe-ssj2',iw:549,ih:691,cx:34,cy:26,cw:512,ch:645,hx:480,hy:215,scale:1.625,y:50},
+  },
+  'Tao Pai Pai': {
+    'Base':{f:'taopaipai-base',iw:584,ih:727,cx:12,cy:27,cw:543,ch:670,hx:505,hy:210,scale:1.69,y:75},
+    'Furia':{f:'taopaipai-ssj1',iw:540,ih:727,cx:5,cy:39,cw:531,ch:670,hx:500,hy:210,scale:1.69,y:81},
+    'Poder máx.':{f:'taopaipai-ssj2',iw:605,ih:738,cx:23,cy:48,cw:572,ch:647,hx:520,hy:210,scale:1.69,y:74},
+    'Definitivo':{f:'taopaipai-ssj2',iw:605,ih:738,cx:23,cy:48,cw:572,ch:647,hx:520,hy:210,scale:1.69,y:74},
+  },
+  'Bulma': {
+    'Base':{f:'bulma-base',iw:585,ih:820,cx:34,cy:67,cw:493,ch:713,hx:485,hy:220,scale:1.56,y:90},
+    'Furia':{f:'bulma-ssj1',iw:556,ih:799,cx:19,cy:49,cw:481,ch:732,hx:465,hy:220,scale:1.56,y:91},
+    'Poder máx.':{f:'bulma-ssj2',iw:603,ih:834,cx:90,cy:31,cw:486,ch:763,hx:500,hy:220,scale:1.56,y:96},
+    'Definitivo':{f:'bulma-ssj2',iw:603,ih:834,cx:90,cy:31,cw:486,ch:763,hx:500,hy:220,scale:1.56,y:96},
+  },
+  'Chichi': {
+    'Base':{f:'chichi-base',iw:609,ih:849,cx:25,cy:31,cw:584,ch:818,hx:505,hy:250,scale:1.495,y:85},
+    'Furia':{f:'chichi-ssj1',iw:595,ih:834,cx:6,cy:49,cw:540,ch:773,hx:500,hy:245,scale:1.495,y:85},
+    'Poder máx.':{f:'chichi-ssj2',iw:572,ih:828,cx:32,cy:17,cw:535,ch:788,hx:495,hy:240,scale:1.495,y:81},
+    'Definitivo':{f:'chichi-ssj2',iw:572,ih:828,cx:32,cy:17,cw:535,ch:788,hx:495,hy:240,scale:1.495,y:81},
+  },
+  'Shin': {
+    'Base':{f:'shin-base',iw:604,ih:858,cx:6,cy:0,cw:549,ch:792,hx:520,hy:245,scale:1.495,y:73},
+    'Furia':{f:'shin-ssj1',iw:570,ih:839,cx:27,cy:24,cw:536,ch:794,hx:515,hy:240,scale:1.495,y:85},
+    'Poder máx.':{f:'shin-ssj2',iw:632,ih:852,cx:17,cy:33,cw:596,ch:795,hx:565,hy:250,scale:1.495,y:85},
+    'Definitivo':{f:'shin-ssj2',iw:632,ih:852,cx:17,cy:33,cw:596,ch:795,hx:565,hy:250,scale:1.495,y:85},
+  },
+  'Mr. Popo': {
+    'Base':{f:'mrpopo-base',iw:535,ih:906,cx:30,cy:111,cw:491,ch:752,hx:500,hy:330,scale:1.495,y:67},
+    'Furia':{f:'mrpopo-ssj1',iw:512,ih:807,cx:12,cy:20,cw:483,ch:757,hx:475,hy:250,scale:1.495,y:64},
+    'Poder máx.':{f:'mrpopo-ssj2',iw:555,ih:801,cx:29,cy:11,cw:492,ch:769,hx:500,hy:245,scale:1.495,y:68},
+    'Definitivo':{f:'mrpopo-ssj2',iw:555,ih:801,cx:29,cy:11,cw:492,ch:769,hx:500,hy:245,scale:1.495,y:68},
+  },
+  'Dende': {
+    'Base':{f:'dende-base',iw:539,ih:760,cx:56,cy:38,cw:483,ch:718,hx:500,hy:275,scale:1.15,y:-6},
+    'Furia':{f:'dende-ssj1',iw:519,ih:766,cx:31,cy:31,cw:452,ch:718,hx:470,hy:270,scale:1.15,y:-7},
+    'Poder máx.':{f:'dende-ssj2',iw:559,ih:766,cx:57,cy:25,cw:478,ch:718,hx:510,hy:270,scale:1.15,y:-9},
+    'Definitivo':{f:'dende-ssj2',iw:559,ih:766,cx:57,cy:25,cw:478,ch:718,hx:510,hy:270,scale:1.15,y:-9},
+  },
+  'Videl': {
+    'Base':{f:'videl-base',iw:535,ih:822,cx:6,cy:25,cw:502,ch:764,hx:490,hy:235,scale:1.552,y:86},
+    'Furia':{f:'videl-ssj1',iw:507,ih:825,cx:5,cy:26,cw:489,ch:782,hx:470,hy:240,scale:1.552,y:93},
+    'Poder máx.':{f:'videl-ssj2',iw:544,ih:823,cx:5,cy:27,cw:508,ch:791,hx:495,hy:240,scale:1.552,y:95},
+    'Definitivo':{f:'videl-ssj2',iw:544,ih:823,cx:5,cy:27,cw:508,ch:791,hx:495,hy:240,scale:1.552,y:95},
+  },
+  'Mr. Satan': {
+    'Base':{f:'satan-base',iw:508,ih:752,cx:9,cy:17,cw:469,ch:681,hx:420,hy:220,scale:1.755,y:80},
+    'Furia':{f:'satan-ssj1',iw:533,ih:722,cx:0,cy:32,cw:533,ch:678,hx:425,hy:220,scale:1.755,y:86},
+    'Poder máx.':{f:'satan-ssj2',iw:557,ih:750,cx:22,cy:22,cw:535,ch:728,hx:440,hy:220,scale:1.755,y:107},
+    'Definitivo':{f:'satan-ssj2',iw:557,ih:750,cx:22,cy:22,cw:535,ch:728,hx:440,hy:220,scale:1.755,y:107},
+  },
+  'Majin Buu': {
+    'boo1':{f:'buu-boo1',iw:556,ih:501,cx:27,cy:38,cw:443,ch:463,hx:430,hy:190,scale:2.145,y:28,bob:true},
+    'boo2':{f:'buu-boo2',iw:501,ih:488,cx:48,cy:21,cw:391,ch:457,hx:420,hy:175,scale:2.145,y:23,bob:true},
+    'boo3':{f:'buu-boo3',iw:524,ih:558,cx:47,cy:28,cw:436,ch:499,hx:435,hy:190,scale:2.145,y:45,bob:true},
+    'kidboo':{f:'buu-kidboo',iw:1536,ih:1024,cx:349,cy:33,cw:837,ch:958,hx:980,hy:300,scale:1.365,y:63,bob:true},
+  },
+  'Freezer': {
+    '1ª forma':{f:'freezer-form1',iw:428,ih:535,cx:8,cy:12,cw:399,ch:505,hx:385,hy:195,scale:2.10,y:31,bob:true},
+    '2ª forma':{f:'freezer-form2',iw:1536,ih:1024,cx:237,cy:30,cw:1299,ch:994,hx:1060,hy:300,scale:1.40,y:69,bob:true},
+    '3ª forma':{f:'freezer-form3',iw:405,ih:618,cx:0,cy:23,cw:405,ch:528,hx:370,hy:220,scale:1.89,y:16,bob:true},
+    '4ª forma':{f:'freezer-form4',iw:1536,ih:1024,cx:270,cy:31,cw:862,ch:964,hx:990,hy:290,scale:1.54,y:93,bob:true},
+    'Freezer mecanizado':{f:'freezer-mecha',iw:404,ih:590,cx:2,cy:43,cw:395,ch:528,hx:365,hy:220,scale:1.89,y:27,bob:true},
+    'Golden Freezer':{f:'freezer-golden',iw:431,ih:641,cx:14,cy:53,cw:417,ch:518,hx:390,hy:225,scale:1.89,y:24,bob:true},
+  },
+  'Cell': {
+    'Base':{f:'cell-form1',iw:1024,ih:1536,cx:1,cy:19,cw:1023,ch:1508,hx:850,hy:520,scale:1.50,y:87,bob:true},
+    'Furia':{f:'cell-form2',iw:502,ih:758,cx:10,cy:42,cw:492,ch:651,hx:455,hy:270,scale:1.89,y:68,bob:true},
+    'Poder máx.':{f:'cell-form3',iw:535,ih:735,cx:23,cy:11,cw:511,ch:687,hx:465,hy:240,scale:1.89,y:88,bob:true},
+    'Definitivo':{f:'cell-form3',iw:535,ih:735,cx:23,cy:11,cw:511,ch:687,hx:465,hy:240,scale:1.89,y:88,bob:true},
+  },
+};
+function placeSprite(side, conf){
+  const t = SPR_T;
+  const feetImg = conf.cy + conf.ch;
+  let Sc = t.fh / Math.max(40, feetImg - conf.hy);       // normaliza altura de cuerpo
+  Sc = Math.max(t.scMin, Math.min(t.scMax, Sc));
+  Sc *= conf.scale || 1;
+  const X = t.handX - conf.hx*Sc;                          // ancla la mano en X
+  const Y = t.baseY - feetImg*Sc + (conf.y || 0);          // ancla los pies abajo y permite ajuste fino
+  const csp = document.getElementById('charsprite-'+side);
+  const drawn = document.getElementById('drawn-'+side);
+  const sg = document.getElementById('sprite-'+side);
+  const fp = document.getElementById('firePoint-'+side);
+  const url = 'assets/'+conf.f+'.png';
+  csp.onerror = ()=>{
+    csp.style.display = 'none';
+    if(sg) sg.classList.remove('sprite-bob');
+    if(drawn) drawn.style.display = '';
+    if(fp){ fp.setAttribute('cx', 208); fp.setAttribute('cy', 145); }
+  };
+  csp.onload = ()=>{
+    csp.style.display = '';
+    if(drawn) drawn.style.display = 'none';
+  };
+  if(sg) sg.classList.toggle('sprite-bob', conf.bob !== false);
+  csp.setAttribute('href', url);
+  csp.setAttributeNS('http://www.w3.org/1999/xlink','href', url);
+  csp.setAttribute('x', X.toFixed(1)); csp.setAttribute('y', Y.toFixed(1));
+  csp.setAttribute('width', (conf.iw*Sc).toFixed(1));
+  csp.setAttribute('height', (conf.ih*Sc).toFixed(1));
+  csp.style.display = '';
+  if(fp){ fp.setAttribute('cx', (X+conf.hx*Sc).toFixed(1));
+          fp.setAttribute('cy', (Y+conf.hy*Sc).toFixed(1)); }
+}
+
+function phaseStops(name){
+  const ladder = ladderOf(name);
+  const spr = SPRITES[name];
+  if(!spr) return ladder.map((_,i)=>i);
+  const stops = [0];
+  let prevFile = spr[ladder[0].name]?.f || null;
+  for(let i=1; i<ladder.length; i++){
+    const curFile = spr[ladder[i].name]?.f || null;
+    if(!curFile || !prevFile || curFile !== prevFile) stops.push(i);
+    if(curFile) prevFile = curFile;
+  }
+  return stops;
+}
+
+function hasPlayableSprite(name){
+  const ladder = ladderOf(name);
+  const spr = SPRITES[name];
+  return !!(spr && ladder.some(ph => spr[ph.name] && spr[ph.name].f));
+}
+
+function nextPhaseIndex(name, phase){
+  const stops = phaseStops(name);
+  return stops.find(i=>i>phase);
+}
+
+// progreso (0..1) hacia la siguiente fase
+function barPct(side){
+  const s = sides[side]; if(!s.name) return 0;
+  const ladder = ladderOf(s.name); const ph = ladder[s.phase], next = ladder[nextPhaseIndex(s.name, s.phase)];
+  if(!next) return 1;
+  return Math.max(0, Math.min(1, (s.energy - ph.at) / (next.at - ph.at)));
+}
+// barra que NUNCA retrocede: al subir de fase se completa al 100% y luego salta
+// (sin animar hacia atrás) al arranque de la nueva fase, enmascarado por el flash.
+function setFill(side, team){
+  const s = sides[side];
+  const el = document.getElementById('fill-'+side);
+  if(team) el.style.background = team;
+  const phaseUp = s.phase > (s._barPhase|0);
+  s._barPhase = s.phase|0;
+  if(phaseUp){
+    el.style.transition = '';            // 1) completa la fase anterior (avanza al 100%)
+    el.style.transform = 'scaleX(1)';
+    s._barFull = true;
+    clearTimeout(el._rt);
+    el._rt = setTimeout(()=>{             // 2) arranca la nueva fase sin retroceso visible
+      const np = barPct(side);
+      el.style.transition = 'none';
+      el.style.transform = 'scaleX('+np+')';
+      void el.offsetWidth;               // reflow para fijar el salto sin animación
+      el.style.transition = '';
+      s._barFull = false; s._barPct = np;
+    }, 500);
+    s._barPct = 1;
+    return;
+  }
+  if(s._barFull) return;                  // en plena ventana "completa→salta": no tocar
+  let pct = barPct(side);
+  if(pct < (s._barPct||0)) pct = s._barPct;   // dentro de la fase nunca hacia atrás
+  el.style.transition = '';
+  el.style.transform = 'scaleX('+pct+')';
+  s._barPct = pct;
+}
+
+function scouterCellFills(side){
+  const s = sides[side]; if(!s.name) return [];
+  const ladder = ladderOf(s.name);
+  const stops = phaseStops(s.name);
+  const fills = [];
+  for(let i=0; i<stops.length-1; i++){
+    const from = ladder[stops[i]], to = ladder[stops[i+1]];
+    let pct = (s.energy - from.at) / Math.max(1, to.at - from.at);
+    fills.push(Math.max(0, Math.min(1, pct)));
+  }
+  return fills;
+}
+
+function setScouterBars(side, team){
+  const sc = document.getElementById('scouter-'+side);
+  if(!sc) return;
+  const s = sides[side];
+  sc.classList.toggle('on', !!s.name);
+  sc.style.setProperty('--sc', team);
+  const ki = s.name ? s.energy * KI_SCALE : 0;
+  sc.classList.toggle('ki-warn', ki >= 500 && ki < 1000);
+  sc.classList.toggle('ki-danger', ki >= 1000);
+  const userEl = document.getElementById('sc-user-'+side);
+  if(userEl) userEl.textContent = s.name ? (s.user || s.name || '') : '';
+  const wrap = sc.querySelector('.sc-bars');
+  if(!wrap) return;
+  const fills = scouterCellFills(side);
+  if(!s.name){ wrap.innerHTML = ''; return; }
+  if(wrap.children.length !== fills.length){
+    wrap.innerHTML = fills.map(()=>'<i><span></span></i>').join('');
+  }
+  [...wrap.children].forEach((cell,i)=>{
+    cell.querySelector('span')?.style.setProperty('--fill', fills[i].toFixed(4));
+  });
+}
+
+function renderSide(side){
+  const s = sides[side];
+  const ladder = s.name ? ladderOf(s.name) : LADDERS.generic;
+  const ph = ladder[s.phase];
+  const next = s.name ? ladder[nextPhaseIndex(s.name, s.phase)] : ladder[s.phase+1];
+  const team = s.name ? cfg(s.name).team : (side==='left'?'#ff7a00':'#2d6cff');
+  setTimerAvatar(side);
+
+  document.getElementById('name-'+side).textContent = s.name || '—';
+  document.getElementById('name-'+side).style.color = team;
+  const phEl = document.getElementById('phase-'+side);
+  phEl.textContent = s.name ? ph.name : '';
+  phEl.style.color = ph.glow;
+  document.getElementById('en-'+side).textContent = Math.round(s.energy);
+  document.getElementById('next-'+side).textContent = next ? ('→ '+next.name+' ('+next.at+')') : 'MÁXIMO';
+
+  // barra: progreso hacia la siguiente fase (nunca retrocede; al subir de fase completa y salta)
+  setFill(side, team);
+
+  document.getElementById('sup-'+side).textContent =
+    s.supporters.slice(-3).map(u=>'⚡'+u).join('  ');
+
+  // aura / partículas / rayos
+  const box = document.getElementById('box-'+side);
+  const aura = document.getElementById('aura-'+side);
+  const part = document.getElementById('part-'+side);
+  box.style.setProperty('--glow', ph.glow);
+  aura.style.setProperty('--glow', ph.glow);
+  part.style.setProperty('--glow', ph.glow);
+  const active = s.name && s.phase>0;
+  aura.style.opacity = active ? Math.min(1,0.4+s.phase*0.12) : 0;
+  part.style.opacity = active ? 0.9 : 0;
+  box.classList.toggle('lightning', !!ph.lightning);
+  box.classList.toggle('charged', active);
+
+  // monigote: brillo, pelo (color + tamaño), pelo largo (SS3+) y color del gi
+  const svg = document.querySelector('#mon-'+side+' .mon-svg');
+  if(svg) svg.style.filter = active ? 'drop-shadow(0 0 16px '+ph.glow+')' : 'none';
+  // pelo real (PNG por fase) colocado detrás de la foto-cabeza
+  const himg = document.getElementById('hairimg-'+side);
+  if(himg){
+    const h = s.name ? HAIR_BY_PHASE[ph.name] : null;
+    if(h){
+      const pos = HAIR_POS[h.file];
+      const H = pos.w * h.ih / h.iw;
+      himg.setAttribute('href', 'assets/'+h.file+'.png');
+      himg.setAttributeNS('http://www.w3.org/1999/xlink','href','assets/'+h.file+'.png');
+      himg.setAttribute('x', pos.x); himg.setAttribute('y', pos.y);
+      himg.setAttribute('width', pos.w); himg.setAttribute('height', H);
+      himg.style.display='';
+    } else { himg.style.display='none'; }
+  }
+  const gi = document.getElementById('gi-'+side);
+  if(gi) gi.setAttribute('fill', team);
+  document.getElementById('arms-'+side)?.setAttribute('stroke', team);
+  updateLightning(side);
+
+  // scouter: color de equipo, visibilidad y celdillas proporcionales por tramo de fase.
+  setScouterBars(side, team);
+
+  // ---- sprite completo (Goku/Vegeta) en vez del monigote dibujado ----
+  const conf = s.name && SPRITES[s.name] ? SPRITES[s.name][ph.name] : null;
+  const drawn = document.getElementById('drawn-'+side);
+  const csp = document.getElementById('charsprite-'+side);
+  const sg = document.getElementById('sprite-'+side);
+  const fp = document.getElementById('firePoint-'+side);
+  if(conf){
+    placeSprite(side, conf);
+    if(drawn) drawn.style.display = 'none';
+  } else {
+    if(csp) csp.style.display = 'none';
+    if(sg) sg.classList.remove('sprite-bob');
+    if(drawn) drawn.style.display = '';
+    if(fp){ fp.setAttribute('cx', 208); fp.setAttribute('cy', 145); }
+  }
+}
+
+function renderAll(){ renderSide('left'); renderSide('right'); }
+
+/* ---- scouter: el número de KI sube/baja contando hacia el valor real ---- */
+const KI_SCALE = 1;             // el scouter marca el mismo KI que la barra de energía
+const kiShown = {left:0, right:0};
+function kiTarget(side){ const s=sides[side]; return s.name ? Math.round(s.energy*KI_SCALE) : 0; }
+function fmtKI(n){ return n.toLocaleString('es-ES'); }
+function animateScouters(){
+  for(const side of ['left','right']){
+    const el = document.getElementById('ki-'+side);
+    if(!el) continue;
+    const tgt = kiTarget(side), cur = kiShown[side];
+    if(cur !== tgt){
+      const diff = tgt - cur;
+      const step = Math.sign(diff) * Math.max(1, Math.ceil(Math.abs(diff)*0.16));
+      let nv = cur + step;
+      if((step>0 && nv>tgt) || (step<0 && nv<tgt)) nv = tgt;
+      kiShown[side] = nv;
+      el.textContent = fmtKI(nv);
+    }
+  }
+  requestAnimationFrame(animateScouters);
+}
+
+/* ====================== MECÁNICA ====================== */
+function pickCharacter(side, name, faceUrl, faceLabel){
+  if(ended) return;
+  if(!hasPlayableSprite(name)) return;
+  const fillEl = document.getElementById('fill-'+side);
+  if(fillEl){ clearTimeout(fillEl._rt); fillEl.style.transition='none'; fillEl.style.transform='scaleX(0)'; void fillEl.offsetWidth; fillEl.style.transition=''; }
+  sides[side] = {name, energy:0, phase:0, supporters:[], face:faceUrl||null, user:faceLabel||name};
+  setFace(side, faceUrl||null, faceLabel||name);
+  renderSide(side);
+}
+
+function checkTransform(side){
+  const s = sides[side];
+  if(!s.name) return;
+  const ladder = ladderOf(s.name);
+  const stops = phaseStops(s.name);
+  let np = s.phase;
+  for(const i of stops){
+    if(i > np && s.energy >= ladder[i].at) np = i;
+  }
+  if(np > s.phase){ s.phase = np; transformFX(side); }
+}
+
+function transformFX(side){
+  const box = document.getElementById('box-'+side);
+  const flash = document.getElementById('flash-'+side);
+  renderSide(side);
+  flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+  box.classList.remove('transform'); void box.offsetWidth; box.classList.add('transform');
+  clearTimeout(box._tt); box._tt = setTimeout(()=>box.classList.remove('transform'), 760);
+  document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake');
+  const sc = document.getElementById('scouter-'+side);
+  if(sc){ sc.classList.remove('spike'); void sc.offsetWidth; sc.classList.add('spike');
+    clearTimeout(sc._st); sc._st = setTimeout(()=>sc.classList.remove('spike'), 620); }
+  const ph = ladderOf(sides[side].name)[sides[side].phase];
+  const ebar = document.querySelector('#np-'+side+' .ebar');
+  if(ebar){ ebar.style.setProperty('--pu', ph.glow);
+    ebar.classList.remove('powerup'); void ebar.offsetWidth; ebar.classList.add('powerup');
+    clearTimeout(ebar._pt); ebar._pt = setTimeout(()=>ebar.classList.remove('powerup'), 720); }
+  popFeed('⬆ '+sides[side].name+' → '+ph.name, ph.glow, side);
+}
+
+function addEnergy(side, amount, username){
+  if(ended || !sides[side].name) return;
+  const s = sides[side];
+  const ladder = ladderOf(s.name);
+  const mult = ladder[s.phase].mult || 1;
+  s.energy += amount * mult;
+  if(username){
+    userTeam[username] = side;
+    if(!s.supporters.includes(username)) s.supporters.push(username);
+  }
+  const box = document.getElementById('box-'+side);
+  box.classList.add('charging');
+  clearTimeout(box._ct); box._ct = setTimeout(()=>box.classList.remove('charging'), 900);
+  checkTransform(side);
+  renderSide(side);
+}
+
+// Decide a qué lado va un regalo de quien aún no tiene equipo.
+function sideForGift(username, namedChar){
+  if(userTeam[username]) return userTeam[username];
+  if(namedChar){
+    if(sides.left.name===namedChar) return 'left';
+    if(sides.right.name===namedChar) return 'right';
+  }
+  // si no ha elegido, refuerza al que va por detrás (mantiene la pelea reñida)
+  return sides.left.energy <= sides.right.energy ? 'left' : 'right';
+}
+
+function popFeed(text, color, side){
+  // si se indica lado, el contador sale en ese lado (donante izq/dcha); si no, al centro
+  const feed = document.getElementById(side ? 'feed-'+side : 'feed');
+  const el = document.createElement('div');
+  el.className='gift-pop'; el.textContent=text;
+  if(color){ el.style.color=color; el.style.borderColor=color; }
+  feed.appendChild(el);
+  setTimeout(()=>el.remove(), 3400);
+  while(feed.children.length>6) feed.firstChild.remove();
+}
+
+/* ====================== TEMPORIZADOR ====================== */
+function startTimer(){
+  const mins = parseInt(document.getElementById('sim-mins').value)||5;
+  DURATION = mins*60; timer = DURATION; ended=false; running=true;
+  document.getElementById('victory').classList.remove('show');
+  document.getElementById('timer').textContent = fmt(timer);
+  if(timerId) clearInterval(timerId);
+  timerId = setInterval(tick, 1000);
+}
+function tick(){
+  if(!running) return;
+  timer--;
+  const el = document.getElementById('timer');
+  el.textContent = fmt(Math.max(0,timer));
+  el.classList.toggle('low', timer<=30);
+  if(timer<=0){ clearInterval(timerId); running=false; endBattle(); }
+}
+function endBattle(){
+  ended=true;
+  const L=sides.left, R=sides.right;
+  let win, lose, side;
+  if(L.energy===R.energy){ win=null; }
+  else if(L.energy>R.energy){ win=L; lose=R; side='left'; }
+  else { win=R; lose=L; side='right'; }
+  const v=document.getElementById('victory');
+  const t=document.getElementById('v-title');
+  const vmon=document.getElementById('v-mon');
+  if(!win || !win.name){ t.textContent='¡EMPATE!'; t.style.color='#ffd23f';
+    vmon.innerHTML='';
+    document.getElementById('v-sub').textContent=''; v.classList.add('show'); return; }
+  const ph=ladderOf(win.name)[win.phase];
+  window.__clashWin = side;   // el haz ganador arrolla al perdedor
+  t.textContent='¡'+(win.user||win.name).toUpperCase()+' GANA!';
+  t.style.color=ph.glow;
+  // clona el monigote ganador (con su cara, pelo y aura)
+  vmon.innerHTML = document.getElementById('mon-'+side).innerHTML;
+  const vsvg = vmon.querySelector('svg');
+  if(vsvg) vsvg.style.filter = 'drop-shadow(0 0 28px '+ph.glow+')';
+  document.getElementById('v-sub').textContent =
+    win.name+' · '+ph.name+' · '+Math.round(win.energy)+' de energía';
+  v.classList.add('show');
+}
+
+function resetAll(){
+  if(timerId) clearInterval(timerId);
+  running=false; ended=false; timer=DURATION; window.__clashWin=null;
+  sides.left={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
+  sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
+  for(const k in userTeam) delete userTeam[k];
+  for(const side of ['left','right']){ const f=document.getElementById('fill-'+side);
+    if(f){ clearTimeout(f._rt); f.style.transition='none'; f.style.transform='scaleX(0)'; void f.offsetWidth; f.style.transition=''; } }
+  kiShown.left=0; kiShown.right=0;
+  document.getElementById('ki-left').textContent='0';
+  document.getElementById('ki-right').textContent='0';
+  document.getElementById('victory').classList.remove('show');
+  document.getElementById('v-mon').innerHTML='';
+  document.getElementById('timer').textContent=fmt(timer);
+  document.getElementById('timer').classList.remove('low');
+  setFace('left', null, '?'); setFace('right', null, '?');
+  renderAll();
+}
+
+/* ====================== EVENTOS TikFinity (SSE) ====================== */
+// extrae la URL del avatar de TikTok y la pasa por el proxy /avatar del servidor
+function avatarOf(d){
+  const a = d.imgprofile||d.img||d.avatar||d.avatarUrl||d.profileImage||d.profilePicture||d.profilePictureUrl||'';
+  if(!a || String(a).includes('{')) return '';
+  return '/avatar?u='+encodeURIComponent(a);
+}
+
+function handleEvent(d){
+  const ev = (d.event||'').toLowerCase();
+  const username = d.nickname || d.username || d.user || 'alguien';
+  const named = d.character || null;   // el server ya intenta reconocer el personaje en comentarios
+  const face = avatarOf(d);
+
+  if(ev==='comment'){
+    if(!named) return;
+    if(!hasPlayableSprite(named)) return;
+    // si el personaje ya está en un lado, el usuario se une a ese equipo
+    if(sides.left.name===named){ userTeam[username]='left'; renderSide('left'); return; }
+    if(sides.right.name===named){ userTeam[username]='right'; renderSide('right'); return; }
+    // si hay hueco libre, entra a luchar (su cara va en el monigote)
+    if(!sides.left.name){ pickCharacter('left', named, face, username); userTeam[username]='left'; }
+    else if(!sides.right.name){ pickCharacter('right', named, face, username); userTeam[username]='right'; }
+    return;
+  }
+
+  // cualquier regalo aporta energía
+  const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName;
+  if(isGift){
+    const value = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
+    const side = sideForGift(username, named);
+    if(!sides[side].name) return;   // todavía no hay luchador en ese lado
+    addEnergy(side, value, username);
+    popFeed('+'+value+' ⚡ '+username, cfg(sides[side].name).team, side);
+  }
+}
+
+function connect(){
+  try{
+    const es = new EventSource('/events');
+    window.__sse = es;
+    es.onmessage = (e)=>{ try{ handleEvent(JSON.parse(e.data)); }catch(_){ } };
+    es.onerror = ()=>{ es.close(); setTimeout(connect, 2000); };
+  }catch(_){ setTimeout(connect, 2000); }
+}
+
+/* ====================== CHOQUE DE HACES (WebGL) ====================== */
+function clashHex(h){ h=(h||'#888').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+  const n=parseInt(h,16); return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255]; }
+
+function initClash(){
+  const canvas = document.getElementById('clash');
+  const gl = canvas.getContext('webgl', {alpha:true, premultipliedAlpha:false, antialias:true});
+  if(!gl){ canvas.style.display='none'; return; }  // sin WebGL: los monigotes siguen funcionando
+
+  const vsSrc = `attribute vec2 a; void main(){ gl_Position = vec4(a,0.0,1.0); }`;
+  const fsSrc = `
+  precision highp float;
+  uniform vec2 uRes; uniform float uTime;
+  uniform vec2 uA; uniform vec2 uB; uniform vec2 uC;   // mano izq, mano dcha, punto de choque
+  uniform vec3 uColL; uniform vec3 uColR; uniform float uInt;
+  float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+  float noise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+    float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0));
+    return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+  float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<5;i++){ s+=a*noise(p); p=p*2.02+7.0; a*=0.5; } return s; }
+  vec2 segInfo(vec2 p, vec2 a, vec2 b){
+    vec2 pa=p-a, ba=b-a; float t=clamp(dot(pa,ba)/max(dot(ba,ba),1e-5),0.0,1.0);
+    return vec2(distance(p, a+ba*t), t); }
+  vec3 beam(vec2 p, vec2 a, vec2 c, vec3 col, float t, float dir){
+    vec2 si = segInfo(p, a, c);
+    float thick = mix(0.012, 0.095, pow(si.y,0.8));
+    float wob = (fbm(vec2(si.y*9.0 + dir*t*6.0, dir*3.0))-0.5)*thick*1.4;
+    float core = exp(-pow((si.x+wob)/thick, 2.0));
+    float streak = 0.65+0.7*fbm(vec2(si.y*16.0 + dir*t*7.0, si.x*70.0));
+    return col*core*mix(0.7,2.0,si.y)*streak + vec3(1.0)*core*core*mix(0.05,1.0,si.y);
+  }
+  void main(){
+    vec2 uv = gl_FragCoord.xy/uRes;
+    float asp = uRes.x/uRes.y;
+    vec2 p = vec2(uv.x*asp, uv.y);
+    float t = uTime;
+    vec3 col = vec3(0.0);
+    col += beam(p, uA, uC, uColL, t, 1.0);
+    col += beam(p, uB, uC, uColR, t, -1.0);
+    // plasma en el punto de choque
+    float d = distance(p, uC);
+    float ang = atan(p.y-uC.y, p.x-uC.x);
+    float turb = fbm(vec2(ang*3.0 + t*1.5, d*10.0 - t*2.0))*0.07;
+    float r = 0.21 + 0.025*sin(t*7.0) + turb;
+    float halo = smoothstep(r*2.8, 0.0, d);
+    float body = smoothstep(r, r*0.25, d);
+    float coreS = smoothstep(r*0.6, 0.0, d);
+    float spikes = pow(0.5+0.5*sin(ang*12.0 + sin(t*1.7)*3.0), 6.0);
+    spikes *= smoothstep(r*3.4, r*0.6, d);
+    vec3 mixCol = mix(uColL, uColR, clamp((p.x-uC.x)/0.12+0.5, 0.0, 1.0));
+    col += mixCol*halo*0.7;
+    col += mixCol*spikes*1.1;
+    col += mixCol*body*1.8;
+    col += vec3(1.0)*coreS*2.8;
+    col *= uInt;
+    col = vec3(1.0) - exp(-col*1.5);
+    float lum = max(max(col.r,col.g),col.b);
+    gl_FragColor = vec4(col, clamp(lum*1.15,0.0,1.0));
+  }`;
+
+  function sh(type,src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.warn('clash shader:', gl.getShaderInfoLog(s)); } return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vsSrc));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fsSrc));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog,'a'); gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = { res:gl.getUniformLocation(prog,'uRes'), time:gl.getUniformLocation(prog,'uTime'),
+    A:gl.getUniformLocation(prog,'uA'), B:gl.getUniformLocation(prog,'uB'), C:gl.getUniformLocation(prog,'uC'),
+    colL:gl.getUniformLocation(prog,'uColL'), colR:gl.getUniformLocation(prog,'uColR'),
+    int:gl.getUniformLocation(prog,'uInt') };
+
+  function resize(){ const dpr=Math.min(1.5, window.devicePixelRatio||1);
+    const w=canvas.clientWidth||window.innerWidth, h=canvas.clientHeight||1;
+    canvas.width=Math.max(2,(w*dpr)|0); canvas.height=Math.max(2,(h*dpr)|0);
+    gl.viewport(0,0,canvas.width,canvas.height); }
+  window.addEventListener('resize', resize); resize();
+  gl.clearColor(0,0,0,0);
+
+  // posición de una mano (firePoint) en coords aspecto-corregidas, eje Y hacia arriba
+  function handPos(id, fallbackX){
+    const cr = canvas.getBoundingClientRect();
+    const asp = cr.width/cr.height;
+    const el = document.getElementById(id);
+    if(el){ const b=el.getBoundingClientRect();
+      const x=((b.left+b.width/2 - cr.left)/cr.width)*asp;
+      const y=1-((b.top+b.height/2 - cr.top)/cr.height);
+      return [x,y]; }
+    return [fallbackX*asp, 0.5];
+  }
+
+  let tpos=0.5, vel=0, inten=0;
+  function frame(ts){
+    const eL=sides.left.energy||0, eR=sides.right.energy||0;
+    const haveL=!!sides.left.name, haveR=!!sides.right.name;
+    let ratio = (eL+eR>0) ? eL/(eL+eR) : 0.5;   // más energía izq -> choque hacia la dcha (el que pierde)
+    let target = ratio;
+    if(window.__clashWin==='left') target=1.0;
+    else if(window.__clashWin==='right') target=0.0;
+    vel += (target-tpos)*0.02; vel *= 0.86; tpos += vel;   // muelle: pega tirones al donar
+    const wob = Math.sin(ts*0.003)*0.01 + Math.sin(ts*0.0017+1.3)*0.006;  // vibración en reposo
+    const tt = Math.min(0.97, Math.max(0.03, tpos+wob));
+    const want = (haveL && haveR) ? 1 : 0; inten += (want-inten)*0.05;   // solo hay choque con 2 luchadores
+    const A = handPos('firePoint-left', 0.22);
+    const B = handPos('firePoint-right', 0.78);
+    const C = [A[0]+(B[0]-A[0])*tt, A[1]+(B[1]-A[1])*tt];
+    const cL = clashHex(haveL?cfg(sides.left.name).team:'#ff7a00');
+    const cR = clashHex(haveR?cfg(sides.right.name).team:'#2d6cff');
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(U.res, canvas.width, canvas.height);
+    gl.uniform1f(U.time, ts*0.001);
+    gl.uniform2f(U.A, A[0],A[1]);
+    gl.uniform2f(U.B, B[0],B[1]);
+    gl.uniform2f(U.C, C[0],C[1]);
+    gl.uniform3f(U.colL, cL[0],cL[1],cL[2]);
+    gl.uniform3f(U.colR, cR[0],cR[1],cR[2]);
+    gl.uniform1f(U.int, inten);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ====================== SIMULADOR ====================== */
+function fillSelects(){
+  const names = Object.keys(ROSTER).sort();
+  for(const id of ['sim-left','sim-right']){
+    const sel=document.getElementById(id);
+    sel.innerHTML = names.map(n=>{
+      const ok = hasPlayableSprite(n);
+      return '<option value="'+n.replace(/"/g,'&quot;')+'" '+(ok?'':'disabled class="unavailable"')+'>'+n+(ok?'':' (sin PNG)')+'</option>';
+    }).join('');
+  }
+  document.getElementById('sim-left').value='Goku';
+  document.getElementById('sim-right').value='Vegeta';
+}
+function simPick(side){
+  const name = document.getElementById('sim-'+side).value;
+  if(!hasPlayableSprite(name)) return;
+  // foto de prueba (en directo real es la foto de perfil de TikTok)
+  const face = 'https://i.pravatar.cc/160?u='+encodeURIComponent(name);
+  pickCharacter(side, name, face, name);
+}
+function simGift(side, val){
+  if(!sides[side].name) simPick(side);
+  addEnergy(side, val, 'tester');
+  popFeed('+'+val+' ⚡ tester', cfg(sides[side].name).team, side);
+}
+function simGiftCustom(side){
+  const input = document.getElementById('sim-energy');
+  const val = Math.max(0, Math.floor(Number(input.value)||0));
+  if(!val) return;
+  simGift(side, val);
+}
+
+/* atajos: 0 oculta el simulador (modo OBS), R resetea */
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='0') document.body.classList.toggle('obs');
+  if(e.key.toLowerCase()==='r') resetAll();
+});
+
+/* ====================== INIT ====================== */
+const params = new URLSearchParams(location.search);
+if(params.get('obs')==='1') document.body.classList.add('obs');
+injectMonigote('left'); injectMonigote('right');
+setFace('left', null, '?'); setFace('right', null, '?');
+fillSelects();
+renderAll();
+initClash();
+startLightning();
+animateScouters();
+connect();
+</script>
+</body>
+</html>
