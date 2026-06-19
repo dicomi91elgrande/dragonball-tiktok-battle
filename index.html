@@ -684,20 +684,20 @@ const HAIR_POS = {
 const SPR_T = { fh:172, baseY:344, handX:212, scMin:0.16, scMax:0.30 };
 const SPRITES = {
   'Goku': {
-    'Base':{f:'goku-v2-base',iw:514,ih:511,cx:27,cy:39,cw:407,ch:447,hx:434,hy:170,scale:2.85,y:96},
-    'Super Saiyan':{f:'goku-v2-ssj1',iw:462,ih:511,cx:12,cy:17,cw:397,ch:474,hx:409,hy:170,scale:2.85,y:100},
-    'Super Saiyan 2':{f:'goku-v2-ssj2',iw:442,ih:497,cx:10,cy:13,cw:397,ch:475,hx:407,hy:170,scale:2.85,y:98},
-    'Super Saiyan 3':{f:'goku-v2-ssj3',iw:468,ih:506,cx:46,cy:29,cw:387,ch:468,hx:433,hy:172,scale:2.85,y:104},
-    'Super Saiyan God':{f:'goku-v2-god',iw:433,ih:486,cx:25,cy:21,cw:383,ch:458,hx:408,hy:166,scale:2.85,y:94},
-    'Super Saiyan Blue':{f:'goku-v2-blue',iw:444,ih:527,cx:23,cy:8,cw:391,ch:499,hx:414,hy:176,scale:2.85,y:109},
+    'Base':{f:'goku-v2-base',iw:514,ih:511,cx:27,cy:39,cw:407,ch:447,hx:434,hy:170,scale:2.85,x:20,y:68},
+    'Super Saiyan':{f:'goku-v2-ssj1',iw:462,ih:511,cx:12,cy:17,cw:397,ch:474,hx:409,hy:170,scale:2.85,x:20,y:72},
+    'Super Saiyan 2':{f:'goku-v2-ssj2',iw:442,ih:497,cx:10,cy:13,cw:397,ch:475,hx:407,hy:170,scale:2.85,x:20,y:70},
+    'Super Saiyan 3':{f:'goku-v2-ssj3',iw:468,ih:506,cx:46,cy:29,cw:387,ch:468,hx:433,hy:172,scale:2.85,x:20,y:76},
+    'Super Saiyan God':{f:'goku-v2-god',iw:433,ih:486,cx:25,cy:21,cw:383,ch:458,hx:408,hy:166,scale:2.85,x:20,y:66},
+    'Super Saiyan Blue':{f:'goku-v2-blue',iw:444,ih:527,cx:23,cy:8,cw:391,ch:499,hx:414,hy:176,scale:2.85,x:20,y:81},
   },
   'Vegeta': {
-    'Base':{f:'vegeta-v2-base',iw:533,ih:529,cx:42,cy:16,cw:420,ch:503,hx:462,hy:172,scale:2.45,y:83},
-    'Super Saiyan':{f:'vegeta-v2-ssj1',iw:499,ih:543,cx:28,cy:15,cw:415,ch:504,hx:443,hy:174,scale:2.45,y:82},
-    'Super Saiyan 2':{f:'vegeta-v2-ssj2',iw:501,ih:544,cx:57,cy:18,cw:415,ch:504,hx:472,hy:181,scale:2.45,y:79},
-    'Super Saiyan 3':{f:'vegeta-v2-ssj3',iw:556,ih:515,cx:70,cy:0,cw:418,ch:493,hx:488,hy:170,scale:2.45,y:65},
-    'Super Saiyan God':{f:'vegeta-v2-god',iw:491,ih:543,cx:55,cy:14,cw:415,ch:505,hx:470,hy:174,scale:2.45,y:82},
-    'Super Saiyan Blue':{f:'vegeta-v2-blue',iw:477,ih:535,cx:36,cy:12,cw:416,ch:506,hx:452,hy:174,scale:2.45,y:81},
+    'Base':{f:'vegeta-v2-base',iw:533,ih:529,cx:42,cy:16,cw:420,ch:503,hx:462,hy:172,scale:2.45,x:20,y:55},
+    'Super Saiyan':{f:'vegeta-v2-ssj1',iw:499,ih:543,cx:28,cy:15,cw:415,ch:504,hx:443,hy:174,scale:2.45,x:20,y:54},
+    'Super Saiyan 2':{f:'vegeta-v2-ssj2',iw:501,ih:544,cx:57,cy:18,cw:415,ch:504,hx:472,hy:181,scale:2.45,x:20,y:51},
+    'Super Saiyan 3':{f:'vegeta-v2-ssj3',iw:556,ih:515,cx:70,cy:0,cw:418,ch:493,hx:488,hy:170,scale:2.45,x:20,y:37},
+    'Super Saiyan God':{f:'vegeta-v2-god',iw:491,ih:543,cx:55,cy:14,cw:415,ch:505,hx:470,hy:174,scale:2.45,x:20,y:54},
+    'Super Saiyan Blue':{f:'vegeta-v2-blue',iw:477,ih:535,cx:36,cy:12,cw:416,ch:506,hx:452,hy:174,scale:2.45,x:20,y:53},
   },
   'Gohan': {
     'Base':{f:'gohan-base',iw:447,ih:493,cx:35,cy:43,cw:401,ch:433,hx:414,hy:172,scale:2.60,y:65,bob:true},
@@ -960,7 +960,7 @@ function placeSprite(side, conf){
   let Sc = t.fh / Math.max(40, feetImg - conf.hy);       // normaliza altura de cuerpo
   Sc = Math.max(t.scMin, Math.min(t.scMax, Sc));
   Sc *= conf.scale || 1;
-  const X = t.handX - conf.hx*Sc;                          // ancla la mano en X
+  const X = t.handX - conf.hx*Sc + (conf.x || 0);           // ancla la mano en X y permite ajuste fino
   const Y = t.baseY - feetImg*Sc + (conf.y || 0);          // ancla los pies abajo y permite ajuste fino
   const csp = document.getElementById('charsprite-'+side);
   const drawn = document.getElementById('drawn-'+side);
