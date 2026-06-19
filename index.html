@@ -484,7 +484,7 @@ const sides = {
   right: {name:null, energy:0, phase:0, supporters:[]},
 };
 const userTeam = {};         // username -> 'left'|'right'
-const pendingPick = {};      // username -> personaje elegido con !Nombre, pendiente de regalo
+const pendingPick = {};      // username -> personaje elegido por chat, pendiente de regalo
 const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
 let timer = DURATION, timerId = null, running = false, ended = false;
 
@@ -1417,7 +1417,6 @@ function handleEvent(d){
     if(!named) return;
     if(!hasPlayableSprite(named)) return;
     pendingPick[userKey] = {name:named, face, user:username, key:userKey};
-    popFeed(username+' selecciona a '+named+', envia cualquier regalo para ir a la batalla', cfg(named).team);
     return;
   }
 
