@@ -308,11 +308,10 @@ class Handler(BaseHTTPRequestHandler):
             obj = {'event': 'raw', 'raw': raw.decode('utf-8', 'replace')}
         if not isinstance(obj, dict):
             obj = {'event': 'raw', 'raw': obj}
-        # En comentarios intentamos reconocer un personaje; si no, lo dejamos pasar igual
-        # pero marcado, por si el overlay quiere mostrar el chat.
-        if obj.get('event') == 'comment':
-            matched = command_char(obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content') or '')
-            obj['character'] = matched or ''
+        # Reconoce comandos tipo !Goku aunque Interactive nombre el evento/campo de otra forma.
+        matched = command_char(obj.get('comment') or obj.get('message') or obj.get('text') or obj.get('content') or '')
+        if matched:
+            obj['character'] = matched
         broadcast(obj)
         avatar = obj.get('imgprofile') or obj.get('img') or obj.get('avatar') or obj.get('avatarUrl') or obj.get('profileImage') or obj.get('profilePicture') or obj.get('profilePictureUrl') or ''
         log('webhook:', {

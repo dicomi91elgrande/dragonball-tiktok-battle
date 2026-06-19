@@ -1008,6 +1008,31 @@ function hasPlayableSprite(name){
   return !!(spr && ladder.some(ph => spr[ph.name] && spr[ph.name].f));
 }
 
+function findCharCommand(text){
+  const m = String(text||'').match(/!(\S+)/);
+  if(!m) return null;
+  const q = slug(m[1]);
+  if(!q) return null;
+  let best = null;
+  for(const name of Object.keys(ROSTER)){
+    const s = slug(name);
+    if(s===q || s.includes(q) || q.includes(s)) return name;
+    let dist = 0, a=q, b=s;
+    const prev = Array.from({length:b.length+1},(_,i)=>i);
+    for(let i=1;i<=a.length;i++){
+      let last = prev[0]; prev[0]=i;
+      for(let j=1;j<=b.length;j++){
+        const old = prev[j];
+        prev[j] = Math.min(prev[j]+1, prev[j-1]+1, last+(a[i-1]===b[j-1]?0:1));
+        last = old;
+      }
+    }
+    dist = prev[b.length];
+    if(dist <= (q.length>=8?2:1) && (!best || dist < best.dist)) best = {name, dist};
+  }
+  return best && best.name;
+}
+
 function nextPhaseIndex(name, phase){
   const stops = phaseStops(name);
   return stops.find(i=>i>phase);
@@ -1218,7 +1243,7 @@ function renderQueue(){
 }
 
 function enqueueFighter(entry){
-  if(fightQueue.some(q=>queueKey(q.user,q.name)===queueKey(entry.user,entry.name))) return;
+  if(fightQueue.some(q=>queueKey(q.key||q.user,q.name)===queueKey(entry.key||entry.user,entry.name))) return;
   fightQueue.push(entry);
   renderQueue();
 }
@@ -1228,7 +1253,7 @@ function activateQueuedOrPending(entry){
   const side = openSide();
   if(side){
     pickCharacter(side, entry.name, entry.face, entry.user);
-    userTeam[entry.user] = side;
+    userTeam[entry.key || entry.user] = side;
     renderQueue();
     return side;
   }
@@ -1267,14 +1292,14 @@ function transformFX(side){
   popFeed('⬆ '+sides[side].name+' → '+ph.name, ph.glow, side);
 }
 
-function addEnergy(side, amount, username){
+function addEnergy(side, amount, username, userKey){
   if(ended || !sides[side].name) return;
   const s = sides[side];
   const ladder = ladderOf(s.name);
   const mult = ladder[s.phase].mult || 1;
   s.energy += amount * mult;
   if(username){
-    userTeam[username] = side;
+    userTeam[userKey || username] = side;
     if(!s.supporters.includes(username)) s.supporters.push(username);
   }
   const box = document.getElementById('box-'+side);
@@ -1381,32 +1406,34 @@ function avatarOf(d){
 
 function handleEvent(d){
   const ev = (d.event||'').toLowerCase();
+  const userKey = d.username || d.uniqueId || d.userId || d.user || d.nickname || 'alguien';
   const username = d.nickname || d.username || d.user || 'alguien';
-  const named = d.character || null;   // el server ya intenta reconocer el personaje en comentarios
+  const text = d.comment || d.message || d.text || d.content || '';
+  const named = d.character || findCharCommand(text) || null;
   const face = avatarOf(d);
+  const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName;
 
-  if(ev==='comment'){
+  if(named && !isGift){
     if(!named) return;
     if(!hasPlayableSprite(named)) return;
-    pendingPick[username] = {name:named, face, user:username};
+    pendingPick[userKey] = {name:named, face, user:username, key:userKey};
     popFeed(username+' prepara '+named, cfg(named).team);
     return;
   }
 
   // cualquier regalo aporta energía
-  const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName;
   if(isGift){
     const value = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
-    let side = userTeam[username] || null;
-    const wanted = pendingPick[username] || null;
+    let side = userTeam[userKey] || null;
+    const wanted = pendingPick[userKey] || null;
     if(!side && wanted){
-      side = activateQueuedOrPending(pendingPick[username]);
-      delete pendingPick[username];
+      side = activateQueuedOrPending(wanted);
+      delete pendingPick[userKey];
       if(!side) return;             // entró en cola; este regalo no va a otro equipo
     }
-    if(!side) side = sideForGift(username, named);
+    if(!side) side = sideForGift(userKey, named);
     if(!sides[side].name) return;   // todavía no hay luchador en ese lado
-    addEnergy(side, value, username);
+    addEnergy(side, value, username, userKey);
     popFeed('+'+value+' ⚡ '+username, cfg(sides[side].name).team, side);
   }
 }
