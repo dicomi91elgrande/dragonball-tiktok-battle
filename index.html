@@ -1411,7 +1411,7 @@ function handleEvent(d){
   const text = d.comment || d.message || d.text || d.content || '';
   const named = d.character || findCharCommand(text) || null;
   const face = avatarOf(d);
-  const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName;
+  const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName || d.giftname;
 
   if(named && !isGift){
     if(!named) return;
@@ -1423,7 +1423,9 @@ function handleEvent(d){
 
   // cualquier regalo aporta energía
   if(isGift){
-    const value = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
+    const coins = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
+    const repeat = Number(d.repeatcount)>0 ? Number(d.repeatcount) : 1;
+    const value = Math.max(1, Math.round(coins * repeat));
     let side = userTeam[userKey] || null;
     const wanted = pendingPick[userKey] || null;
     if(!side && wanted){
