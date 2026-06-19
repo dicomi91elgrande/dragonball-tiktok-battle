@@ -18,7 +18,7 @@ import re
 import threading
 import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 from urllib.request import Request, urlopen
 
 PORT = int(os.environ.get('PORT', 3000))   # el hosting (Render, etc.) asigna el puerto por env
@@ -158,6 +158,18 @@ def command_char(text):
     if not m:
         return None
     return find_char(m.group(1))
+
+
+def normalize_avatar_url(value):
+    url = str(value or '').strip()
+    if not url or '{' in url:
+        return ''
+    for _ in range(2):
+        decoded = unquote(url)
+        if decoded == url:
+            break
+        url = decoded
+    return url
 
 
 def broadcast(obj):
@@ -313,8 +325,10 @@ class Handler(BaseHTTPRequestHandler):
         matched = command_char(text) or find_char(text)
         if matched:
             obj['character'] = matched
+        avatar = normalize_avatar_url(obj.get('imgprofile') or obj.get('img') or obj.get('avatar') or obj.get('avatarUrl') or obj.get('profileImage') or obj.get('profilePicture') or obj.get('profilePictureUrl') or '')
+        if avatar:
+            obj['imgprofile'] = avatar
         broadcast(obj)
-        avatar = obj.get('imgprofile') or obj.get('img') or obj.get('avatar') or obj.get('avatarUrl') or obj.get('profileImage') or obj.get('profilePicture') or obj.get('profilePictureUrl') or ''
         log('webhook:', {
             'event': obj.get('event'),
             'username': obj.get('username') or obj.get('user'),
