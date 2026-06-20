@@ -45,7 +45,7 @@
 
   /* ---------- temporizador / centro ---------- */
   .center{display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-    align-self:start; padding-top:1vh; gap:6px; min-width:160px;}
+    align-self:start; padding-top:18vh; gap:6px; min-width:160px;}
   .timer{font-family:"Consolas",monospace; font-size:42px; font-weight:bold; letter-spacing:1px;
     text-shadow:0 0 18px rgba(255,210,60,.7), 0 0 4px #000; line-height:1;}
   .timer.low{color:#ff4242; text-shadow:0 0 22px rgba(255,40,40,.9), 0 0 4px #000;
@@ -58,7 +58,7 @@
     box-shadow:0 0 14px var(--sc), 0 0 18px rgba(255,210,60,.2); flex:none;}
   .sc-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
   .sc-avatar.empty{opacity:.35;}
-  .duel-users{position:absolute; z-index:8; pointer-events:none; left:24vw; right:24vw; top:6.2vh;
+  .duel-users{position:absolute; z-index:8; pointer-events:none; left:24vw; right:24vw; top:2.6vh;
     display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:8px;}
   .duel-user{min-width:0; font-size:clamp(14px,2.05vw,29px); font-weight:900; line-height:1;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:0;
@@ -82,7 +82,7 @@
     12%{opacity:1; transform:translateY(0) scale(1)}100%{opacity:0; transform:translateY(-40px)}}
 
   /* ---------- scouter: medidor de KI estilo Dragon Ball ---------- */
-  .scouter{position:absolute; top:15vh; z-index:7; pointer-events:none; display:none;
+  .scouter{position:absolute; top:8.5vh; z-index:7; pointer-events:none; display:none;
     width:min(27vw,250px); --sc:#ff7a00;
     font-family:"Consolas","Courier New",monospace;
     filter:drop-shadow(0 4px 7px rgba(0,0,0,.55));}
@@ -193,7 +193,7 @@
   /* ---------- sprite + aura ---------- */
   /* margin-bottom = hueco que antes dejaba la nameplate (ahora absoluta) para conservar la altura del sprite */
   .charbox{position:relative; width:min(34vw,420px); height:46vh; display:flex;
-    align-items:flex-end; justify-content:center; margin-bottom:24vh;}
+    align-items:flex-end; justify-content:center; margin-bottom:28vh;}
   /* acercar un poco los dos rivales hacia el centro (stream vertical) */
   #box-left{transform:translateX(11.8vw);}
   #box-right{transform:translateX(-11.8vw);}
