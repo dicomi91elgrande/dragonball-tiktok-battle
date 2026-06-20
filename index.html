@@ -342,7 +342,7 @@
 <body>
 <div id="app">
   <div class="bg"></div><div class="stars"></div>
-  <audio id="battle-start-audio" src="assets/battle-start.mp3" preload="auto"></audio>
+  <audio id="battle-start-audio" src="assets/battle-start.mp3" preload="auto" loop></audio>
 
   <!-- Campeón del torneo (izquierda del todo, detrás del luchador izquierdo) -->
   <div class="champion" id="champion">
@@ -476,7 +476,7 @@
     </div>
     <div class="lbl">Temporizador</div>
     <div class="row">
-      <input id="sim-mins" type="number" value="5" min="0.5" step="0.5" style="width:60px"> min
+      <input id="sim-mins" type="number" value="1.5" min="0.5" step="0.5" style="width:60px"> min
       <button onclick="startTimer()">Iniciar</button>
       <button onclick="resetAll()">Reset</button>
     </div>
@@ -571,7 +571,7 @@ function phaseSlug(n){ return slug(n); }
 
 /* ====================== ESTADO ====================== */
 const GIFT_DEFAULT = 10;     // energía si un regalo no trae valor en coins
-let DURATION = 300;          // segundos del temporizador
+let DURATION = 90;           // segundos del temporizador
 const sides = {
   left:  {name:null, energy:0, phase:0, supporters:[]},
   right: {name:null, energy:0, phase:0, supporters:[]},
@@ -1411,13 +1411,23 @@ function animateScouters(){
 }
 
 /* ====================== MECÁNICA ====================== */
-function playBattleStartAudio(){
+function playBattleMusic(){
   const audio = document.getElementById('battle-start-audio');
   if(!audio) return;
   audio.volume = 0.18;
   audio.currentTime = 0;
   const p = audio.play();
   if(p && p.catch) p.catch(()=>{});
+}
+function stopBattleMusic(){
+  const audio = document.getElementById('battle-start-audio');
+  if(!audio) return;
+  audio.pause();
+  audio.currentTime = 0;
+}
+function startBattle(){
+  playBattleMusic();
+  startTimer();
 }
 
 function clearUsersForSide(side){
@@ -1438,7 +1448,7 @@ function pickCharacter(side, name, faceUrl, faceLabel, ownerKey){
   setFace(side, faceUrl||null, faceLabel||name);
   renderSide(side);
   updateIdle();
-  if(!hadBattle && sides.left.name && sides.right.name) playBattleStartAudio();
+  if(!hadBattle && sides.left.name && sides.right.name) startBattle();
 }
 
 function openSide(){
@@ -1571,8 +1581,9 @@ function popFeed(text, color, side){
 
 /* ====================== TEMPORIZADOR ====================== */
 function startTimer(){
-  const mins = parseFloat(document.getElementById('sim-mins').value)||5;
+  const mins = parseFloat(document.getElementById('sim-mins').value)||1.5;
   DURATION = Math.max(1, Math.round(mins*60)); timer = DURATION; ended=false; running=true; window.__clashWin=null;
+  if(sides.left.name && sides.right.name) playBattleMusic();
   document.body.classList.remove('victory-clean');
   document.getElementById('victory').classList.remove('show');
   const timerEl = document.getElementById('timer');
@@ -1597,6 +1608,7 @@ function tick(){
 }
 function endBattle(forcedSide){
   ended=true;
+  stopBattleMusic();
   updateIdle();
   document.body.classList.add('victory-clean');
   const L=sides.left, R=sides.right;
@@ -1632,12 +1644,14 @@ function declareWinner(side){
   if(!sides[side].name) return;
   if(timerId) clearInterval(timerId);
   running = false;
+  stopBattleMusic();
   endBattle(side);
 }
 
 function resetAll(){
   if(timerId) clearInterval(timerId);
   running=false; ended=false; timer=DURATION; window.__clashWin=null;
+  stopBattleMusic();
   document.body.classList.remove('victory-clean');
   sides.left={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
   sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
