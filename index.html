@@ -195,8 +195,8 @@
   .charbox{position:relative; width:min(34vw,420px); height:46vh; display:flex;
     align-items:flex-end; justify-content:center; margin-bottom:20.3vh;}
   /* acercar un poco los dos rivales hacia el centro (stream vertical) */
-  #box-left{transform:translateX(5vw);}
-  #box-right{transform:translateX(-5vw);}
+  #box-left{transform:translateX(9.8vw);}
+  #box-right{transform:translateX(-9.8vw);}
   .aura{position:absolute; left:50%; top:55%; width:120%; height:120%;
     transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
     background:radial-gradient(closest-side, var(--glow) 0%, transparent 72%);
@@ -289,22 +289,6 @@
   body.victory-clean .champion,
   body.victory-clean .queue{display:none !important;}
 
-  /* ---------- pantalla de espera / intro (imagen + texto corto) ---------- */
-  .intro{display:none; position:absolute; inset:0; z-index:9; overflow:hidden; pointer-events:none;}
-  body.intro-on .intro{display:block;}
-  body.intro-on .stage, body.intro-on .scouter, body.intro-on .duel-users,
-  body.intro-on .feed-side, body.intro-on .queue, body.intro-on #clash{display:none !important;}
-  .intro-bg{position:absolute; inset:0; background:#000 url('assets/intro.jpg') center center/cover no-repeat;
-    animation:introBreathe 6s ease-in-out infinite;}
-  @keyframes introBreathe{50%{transform:scale(1.04)}}
-  .intro-text{position:absolute; left:5vw; right:5vw; bottom:7vh; text-align:center;}
-  .intro-title{font-size:clamp(26px,5.6vw,62px); font-weight:900; font-style:italic; letter-spacing:.5px; color:#fff;
-    text-shadow:0 0 16px #ffae2e, 0 0 40px #ff7a00, 3px 3px 0 #000; animation:introText 1.6s ease-in-out infinite;}
-  @keyframes introText{50%{transform:scale(1.05); text-shadow:0 0 28px #ffd23f, 0 0 60px #ff9b1c, 3px 3px 0 #000}}
-  .intro-sub{margin-top:1.6vh; display:inline-block; font-size:clamp(14px,2.4vw,26px); font-weight:bold; color:#fff;
-    padding:.5em 1.1em; border-radius:999px; background:rgba(0,0,0,.5); border:2px solid #ffd23f;
-    box-shadow:0 0 18px rgba(255,200,60,.5); text-shadow:1px 1px 0 #000;}
-
   /* ---------- lado vacío: cartel "elige personaje" (en vez de monigote) ---------- */
   .empty-slot{display:none; position:absolute; inset:0; z-index:2; flex-direction:column;
     align-items:center; justify-content:center; text-align:center; pointer-events:none;}
@@ -371,15 +355,6 @@
       <div class="champ-name" id="champ-name">—</div>
       <div class="champ-char" id="champ-char"></div>
       <div class="champ-ki"><b id="champ-ki">0</b> KI máx</div>
-    </div>
-  </div>
-
-  <!-- Pantalla de espera / intro (al inicio y tras cada reset) -->
-  <div class="intro" id="intro">
-    <div class="intro-bg"></div>
-    <div class="intro-text">
-      <div class="intro-title">¡Elige tu personaje<br>en el chat!</div>
-      <div class="intro-sub">💬 y sal a luchar</div>
     </div>
   </div>
 
@@ -1363,12 +1338,11 @@ function renderSide(side){
 
 function renderAll(){ renderSide('left'); renderSide('right'); }
 
-/* ====================== INTRO / PANTALLA DE ESPERA ====================== */
-// idle = sin luchadores y sin batalla terminada -> se muestra la intro animada
-function updateIdle(){
-  const idle = !sides.left.name && !sides.right.name && !ended;
-  document.body.classList.toggle('intro-on', idle);
-}
+/* ====================== ESPERA ====================== */
+// Sin pantalla de intro: cuando no hay luchadores, cada lado muestra su propio
+// cartel "Elige personaje en el chat" (lo gestiona renderSide). updateIdle solo
+// se asegura de que nunca quede activa la antigua intro.
+function updateIdle(){ document.body.classList.remove('intro-on'); }
 
 /* ====================== CAMPEÓN DEL TORNEO ====================== */
 // récord persistente (localStorage del navegador/OBS): quien logró el KI máximo.
