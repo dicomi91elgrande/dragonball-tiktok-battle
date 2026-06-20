@@ -1520,10 +1520,13 @@ function initClash(){
   vec3 beam(vec2 p, vec2 a, vec2 c, vec3 col, float t, float dir){
     vec2 si = segInfo(p, a, c);
     float thick = mix(0.012, 0.095, pow(si.y,0.8));
-    float wob = (fbm(vec2(si.y*9.0 + dir*t*6.0, dir*3.0))-0.5)*thick*1.4;
-    float core = exp(-pow((si.x+wob)/thick, 2.0));
-    float streak = 0.65+0.7*fbm(vec2(si.y*16.0 + dir*t*7.0, si.x*70.0));
-    return col*core*mix(0.7,2.0,si.y)*streak + vec3(1.0)*core*core*mix(0.05,1.0,si.y);
+    float wob = (fbm(vec2(si.y*11.0 + dir*t*6.0, dir*3.0))-0.5)*thick*2.2;
+    wob += sin(si.y*42.0 + t*4.0*dir)*thick*0.18;
+    float edge = smoothstep(0.0, 0.08, si.y) * smoothstep(1.0, 0.72, si.y);
+    float core = exp(-pow(abs(si.x+wob)/thick, 1.65)) * edge;
+    float mist = exp(-pow(abs(si.x+wob)/(thick*2.35), 1.25)) * edge;
+    float streak = 0.55+0.75*fbm(vec2(si.y*18.0 + dir*t*7.0, (si.x+wob)*45.0));
+    return col*(core*mix(0.45,1.35,si.y)*streak + mist*0.26) + vec3(1.0)*core*core*mix(0.03,0.65,si.y);
   }
   void main(){
     vec2 uv = gl_FragCoord.xy/uRes;
