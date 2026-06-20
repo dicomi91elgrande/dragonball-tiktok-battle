@@ -419,6 +419,11 @@
       <button onclick="startTimer()">Iniciar</button>
       <button onclick="resetAll()">Reset</button>
     </div>
+    <div class="lbl">Ganador manual</div>
+    <div class="row">
+      <button onclick="declareWinner('left')">Gana ◄</button>
+      <button onclick="declareWinner('right')">► Gana</button>
+    </div>
   </div>
 </div>
 
@@ -508,6 +513,7 @@ const sides = {
 };
 const userTeam = {};         // username -> 'left'|'right'
 const pendingPick = {};      // username -> personaje elegido por chat, pendiente de regalo
+const challengerEnergy = {}; // username -> energía acumulada antes de entrar a la batalla
 const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
 let timer = DURATION, timerId = null, running = false, ended = false;
 
@@ -1060,6 +1066,15 @@ function hasPlayableSprite(name){
   return !!(spr && ladder.some(ph => spr[ph.name] && spr[ph.name].f));
 }
 
+function randomPlayableCharacter(){
+  const names = Object.keys(ROSTER).filter(hasPlayableSprite);
+  if(!names.length) return null;
+  const active = new Set([sides.left.name, sides.right.name].filter(Boolean));
+  const pool = names.filter(n=>!active.has(n));
+  const pick = pool.length ? pool : names;
+  return pick[Math.floor(Math.random()*pick.length)];
+}
+
 function findCharText(text){
   const raw = String(text||'').trim();
   const m = raw.match(/!(\S+)/);
@@ -1268,12 +1283,20 @@ function animateScouters(){
 }
 
 /* ====================== MECÁNICA ====================== */
-function pickCharacter(side, name, faceUrl, faceLabel){
+function clearUsersForSide(side){
+  for(const key of Object.keys(userTeam)){
+    if(userTeam[key] === side) delete userTeam[key];
+  }
+}
+
+function pickCharacter(side, name, faceUrl, faceLabel, ownerKey){
   if(ended) return;
   if(!hasPlayableSprite(name)) return;
+  clearUsersForSide(side);
   const fillEl = document.getElementById('fill-'+side);
   if(fillEl){ clearTimeout(fillEl._rt); fillEl.style.transition='none'; fillEl.style.transform='scaleX(0)'; void fillEl.offsetWidth; fillEl.style.transition=''; }
   sides[side] = {name, energy:0, phase:0, supporters:[], face:faceUrl||null, user:faceLabel||name};
+  if(ownerKey || faceLabel) userTeam[ownerKey || faceLabel] = side;
   setFace(side, faceUrl||null, faceLabel||name);
   renderSide(side);
 }
@@ -1373,6 +1396,28 @@ function sideForGift(username, namedChar){
   return sides.left.energy <= sides.right.energy ? 'left' : 'right';
 }
 
+function weakestSide(){
+  if(!sides.left.name) return 'left';
+  if(!sides.right.name) return 'right';
+  if(sides.left.energy < sides.right.energy) return 'left';
+  if(sides.right.energy < sides.left.energy) return 'right';
+  return null;
+}
+
+function enterFromGift(entry, value){
+  if(!entry || !hasPlayableSprite(entry.name)) return null;
+  const side = openSide();
+  if(side){
+    pickCharacter(side, entry.name, entry.face, entry.user, entry.key || entry.user);
+    return side;
+  }
+  const weak = weakestSide();
+  if(!weak) return null;
+  if(value <= sides[weak].energy) return null;
+  pickCharacter(weak, entry.name, entry.face, entry.user, entry.key || entry.user);
+  return weak;
+}
+
 function popFeed(text, color, side){
   // si se indica lado, el contador sale en ese lado (donante izq/dcha); si no, al centro
   const feed = document.getElementById(side ? 'feed-'+side : 'feed');
@@ -1387,9 +1432,11 @@ function popFeed(text, color, side){
 /* ====================== TEMPORIZADOR ====================== */
 function startTimer(){
   const mins = parseInt(document.getElementById('sim-mins').value)||5;
-  DURATION = mins*60; timer = DURATION; ended=false; running=true;
+  DURATION = mins*60; timer = DURATION; ended=false; running=true; window.__clashWin=null;
   document.getElementById('victory').classList.remove('show');
-  document.getElementById('timer').textContent = fmt(timer);
+  const timerEl = document.getElementById('timer');
+  timerEl.textContent = fmt(timer);
+  timerEl.classList.remove('low');
   if(timerId) clearInterval(timerId);
   timerId = setInterval(tick, 1000);
 }
@@ -1399,13 +1446,21 @@ function tick(){
   const el = document.getElementById('timer');
   el.textContent = fmt(Math.max(0,timer));
   el.classList.toggle('low', timer<=30);
-  if(timer<=0){ clearInterval(timerId); running=false; endBattle(); }
+  if(timer<=0){
+    timer = 0;
+    el.textContent = fmt(0);
+    el.classList.add('low');
+    clearInterval(timerId);
+    running=false;
+  }
 }
-function endBattle(){
+function endBattle(forcedSide){
   ended=true;
   const L=sides.left, R=sides.right;
   let win, lose, side;
-  if(L.energy===R.energy){ win=null; }
+  if(forcedSide==='left'){ win=L; lose=R; side='left'; }
+  else if(forcedSide==='right'){ win=R; lose=L; side='right'; }
+  else if(L.energy===R.energy){ win=null; }
   else if(L.energy>R.energy){ win=L; lose=R; side='left'; }
   else { win=R; lose=L; side='right'; }
   const v=document.getElementById('victory');
@@ -1427,6 +1482,14 @@ function endBattle(){
   v.classList.add('show');
 }
 
+function declareWinner(side){
+  if(side!=='left' && side!=='right') return;
+  if(!sides[side].name) return;
+  if(timerId) clearInterval(timerId);
+  running = false;
+  endBattle(side);
+}
+
 function resetAll(){
   if(timerId) clearInterval(timerId);
   running=false; ended=false; timer=DURATION; window.__clashWin=null;
@@ -1434,6 +1497,7 @@ function resetAll(){
   sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
   for(const k in userTeam) delete userTeam[k];
   for(const k in pendingPick) delete pendingPick[k];
+  for(const k in challengerEnergy) delete challengerEnergy[k];
   fightQueue.length = 0;
   renderQueue();
   for(const side of ['left','right']){ const f=document.getElementById('fill-'+side);
@@ -1479,20 +1543,25 @@ function handleEvent(d){
     const repeat = Number(d.repeatcount)>0 ? Number(d.repeatcount) : 1;
     const value = Math.max(1, Math.round(coins * repeat));
     let side = userTeam[userKey] || null;
-    const wanted = pendingPick[userKey] || null;
-    if(!side && wanted){
-      side = activateQueuedOrPending(wanted);
-      delete pendingPick[userKey];
-      if(!side) return;             // entró en cola; este regalo no va a otro equipo
-    }
-    if(!side && named && hasPlayableSprite(named)){
-      side = activateQueuedOrPending({name:named, face, user:username, key:userKey});
+    let energyToAdd = value;
+    if(!side){
+      const wanted = pendingPick[userKey] || null;
+      const giftName = named && hasPlayableSprite(named) ? named : null;
+      const entryName = wanted?.name || giftName || randomPlayableCharacter();
+      const entry = {name:entryName, face: wanted?.face || face, user: wanted?.user || username, key:userKey};
+      if(entryName && !wanted) pendingPick[userKey] = entry;
+      challengerEnergy[userKey] = (challengerEnergy[userKey] || 0) + value;
+      energyToAdd = challengerEnergy[userKey];
+      side = enterFromGift(entry, energyToAdd);
+      if(side){
+        delete pendingPick[userKey];
+        delete challengerEnergy[userKey];
+      }
       if(!side) return;
     }
-    if(!side) side = sideForGift(userKey, named);
     if(!sides[side].name) return;   // todavía no hay luchador en ese lado
-    addEnergy(side, value, username, userKey);
-    popFeed('+'+value+' ⚡ '+username, cfg(sides[side].name).team, side);
+    addEnergy(side, energyToAdd, username, userKey);
+    popFeed('+'+energyToAdd+' ⚡ '+username, cfg(sides[side].name).team, side);
   }
 }
 
