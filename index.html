@@ -289,39 +289,32 @@
   body.victory-clean .champion,
   body.victory-clean .queue{display:none !important;}
 
-  /* ---------- pantalla de espera / intro animada ---------- */
+  /* ---------- pantalla de espera / intro (imagen + texto corto) ---------- */
   .intro{display:none; position:absolute; inset:0; z-index:9; overflow:hidden; pointer-events:none;}
   body.intro-on .intro{display:block;}
   body.intro-on .stage, body.intro-on .scouter, body.intro-on .duel-users,
   body.intro-on .feed-side, body.intro-on .queue, body.intro-on #clash{display:none !important;}
-  .intro-rays{position:absolute; left:50%; top:38%; width:135vh; height:135vh;
-    transform:translate(-50%,-50%); opacity:.4;
-    background:repeating-conic-gradient(from 0deg, rgba(255,190,40,0) 0deg 6deg, rgba(255,195,55,.5) 6deg 7.5deg);
-    animation:introSpin 16s linear infinite;}
-  @keyframes introSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-  .intro-glow{position:absolute; left:50%; top:38%; width:78vh; height:78vh; transform:translate(-50%,-50%);
-    pointer-events:none; background:radial-gradient(circle, rgba(255,215,90,.55), rgba(255,140,0,.18) 42%, transparent 66%);
-    animation:introPulse 2.2s ease-in-out infinite;}
-  @keyframes introPulse{50%{transform:translate(-50%,-50%) scale(1.13)}}
-  .intro-ball{position:absolute; left:50%; top:38%; width:27vh; height:27vh; transform:translate(-50%,-50%);
-    border-radius:50%; animation:introBob 3s ease-in-out infinite;
-    background:radial-gradient(circle at 37% 30%, #fff7da 0%, #ffd64f 22%, #ff9d1e 58%, #e57200 100%);
-    box-shadow:0 0 7vh rgba(255,175,45,.85), inset -2.2vh -2.2vh 5vh rgba(170,65,0,.55), inset 1.4vh 1.4vh 3vh rgba(255,255,255,.55);}
-  @keyframes introBob{50%{transform:translate(-50%,-55%)}}
-  .intro-ball .ball-stars{position:absolute; inset:0; display:grid; grid-template-columns:1fr 1fr;
-    place-items:center; padding:5.2vh; color:#d62c1a; font-size:5.2vh; line-height:1;
-    text-shadow:0 .3vh .4vh rgba(120,20,0,.4);}
-  .intro-text{position:absolute; left:4vw; right:4vw; top:64%; text-align:center;}
-  .intro-title{font-size:clamp(30px,5.4vw,72px); font-weight:900; font-style:italic; letter-spacing:1px; color:#fff;
-    text-shadow:0 0 18px #ffae2e, 0 0 42px #ff7a00, 3px 3px 0 #000; animation:introText 1.6s ease-in-out infinite;}
-  @keyframes introText{50%{transform:scale(1.045); text-shadow:0 0 30px #ffd23f, 0 0 64px #ff9b1c, 3px 3px 0 #000}}
-  .intro-sub{margin-top:2.2vh; display:inline-block; font-size:clamp(16px,2.5vw,30px); font-weight:bold; color:#fff;
-    padding:.55em 1.2em; border-radius:999px; background:rgba(0,0,0,.42); border:2px solid #ffd23f;
-    box-shadow:0 0 20px rgba(255,200,60,.5); text-shadow:1px 1px 0 #000;}
-  .intro-spark{position:absolute; bottom:0; width:7px; height:7px; border-radius:50%;
-    background:#ffd23f; box-shadow:0 0 10px #ffcf4a; opacity:0; animation:introRise 2.6s linear infinite;}
-  @keyframes introRise{0%{transform:translateY(0) scale(1); opacity:0} 15%{opacity:1}
-    100%{transform:translateY(-70vh) scale(.2); opacity:0}}
+  .intro-bg{position:absolute; inset:0; background:#000 url('assets/intro.jpg') center center/cover no-repeat;
+    animation:introBreathe 6s ease-in-out infinite;}
+  @keyframes introBreathe{50%{transform:scale(1.04)}}
+  .intro-text{position:absolute; left:5vw; right:5vw; bottom:7vh; text-align:center;}
+  .intro-title{font-size:clamp(26px,5.6vw,62px); font-weight:900; font-style:italic; letter-spacing:.5px; color:#fff;
+    text-shadow:0 0 16px #ffae2e, 0 0 40px #ff7a00, 3px 3px 0 #000; animation:introText 1.6s ease-in-out infinite;}
+  @keyframes introText{50%{transform:scale(1.05); text-shadow:0 0 28px #ffd23f, 0 0 60px #ff9b1c, 3px 3px 0 #000}}
+  .intro-sub{margin-top:1.6vh; display:inline-block; font-size:clamp(14px,2.4vw,26px); font-weight:bold; color:#fff;
+    padding:.5em 1.1em; border-radius:999px; background:rgba(0,0,0,.5); border:2px solid #ffd23f;
+    box-shadow:0 0 18px rgba(255,200,60,.5); text-shadow:1px 1px 0 #000;}
+
+  /* ---------- lado vacío: cartel "elige personaje" (en vez de monigote) ---------- */
+  .empty-slot{display:none; position:absolute; inset:0; z-index:2; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; pointer-events:none;}
+  .empty-slot .empty-ring{position:absolute; width:min(26vw,300px); aspect-ratio:1; border-radius:50%;
+    border:3px dashed rgba(255,210,90,.5); animation:emptySpin 18s linear infinite;}
+  @keyframes emptySpin{to{transform:rotate(360deg)}}
+  .empty-slot span{position:relative; font-size:clamp(15px,2.2vw,28px); font-weight:bold; color:#fff;
+    line-height:1.3; text-shadow:0 0 12px rgba(255,200,60,.7), 2px 2px 0 #000;
+    animation:emptyPulse 1.9s ease-in-out infinite;}
+  @keyframes emptyPulse{50%{opacity:.55}}
 
   /* ---------- campeón del torneo (izquierda, detrás del luchador) ---------- */
   .champion{display:none; position:absolute; left:0.8vw; top:12vh; z-index:1; width:min(17vw,205px);
@@ -383,16 +376,10 @@
 
   <!-- Pantalla de espera / intro (al inicio y tras cada reset) -->
   <div class="intro" id="intro">
-    <div class="intro-rays"></div>
-    <div class="intro-glow"></div>
-    <div class="intro-ball"><div class="ball-stars">★★★★</div></div>
-    <span class="intro-spark" style="left:30%; animation-delay:0s"></span>
-    <span class="intro-spark" style="left:44%; animation-delay:.6s"></span>
-    <span class="intro-spark" style="left:57%; animation-delay:1.2s"></span>
-    <span class="intro-spark" style="left:68%; animation-delay:1.8s"></span>
+    <div class="intro-bg"></div>
     <div class="intro-text">
-      <div class="intro-title">¡Elige tu personaje de Dragon Ball<br>en el chat y sal a luchar!!</div>
-      <div class="intro-sub">💬 Escribe su nombre en el chat</div>
+      <div class="intro-title">¡Elige tu personaje<br>en el chat!</div>
+      <div class="intro-sub">💬 y sal a luchar</div>
     </div>
   </div>
 
@@ -443,6 +430,7 @@
         <div class="particles" id="part-left"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="aura" id="aura-left"></div>
         <div class="monigote" id="mon-left"></div>
+        <div class="empty-slot" id="empty-left"><div class="empty-ring"></div><span>Elige personaje<br>en el chat y<br>sal a luchar</span></div>
         <div class="flash" id="flash-left"><span class="fx-pillar"></span><span class="fx-ring2"></span></div>
       </div>
     </div>
@@ -461,6 +449,7 @@
         <div class="particles" id="part-right"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="aura" id="aura-right"></div>
         <div class="monigote" id="mon-right"></div>
+        <div class="empty-slot" id="empty-right"><div class="empty-ring"></div><span>Elige personaje<br>en el chat y<br>sal a luchar</span></div>
         <div class="flash" id="flash-right"><span class="fx-pillar"></span><span class="fx-ring2"></span></div>
       </div>
     </div>
@@ -1341,12 +1330,26 @@ function renderSide(side){
   // scouter: color de equipo, visibilidad y celdillas proporcionales por tramo de fase.
   setScouterBars(side, team);
 
-  // ---- sprite completo (Goku/Vegeta) en vez del monigote dibujado ----
+  // ---- sprite / monigote / lado vacío ----
   const conf = s.name && SPRITES[s.name] ? SPRITES[s.name][ph.name] : null;
   const drawn = document.getElementById('drawn-'+side);
   const csp = document.getElementById('charsprite-'+side);
   const sg = document.getElementById('sprite-'+side);
   const fp = document.getElementById('firePoint-'+side);
+  const empty = document.getElementById('empty-'+side);
+  const monSvg = document.querySelector('#mon-'+side+' .mon-svg');
+  const np = document.getElementById('np-'+side);
+  if(!s.name){
+    // lado SIN luchador: no monigote ni barra, solo el cartel "elige personaje"
+    if(empty) empty.style.display = 'flex';
+    if(monSvg) monSvg.style.display = 'none';
+    if(csp) csp.style.display = 'none';
+    if(np) np.style.display = 'none';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  if(monSvg) monSvg.style.display = '';
+  if(np) np.style.display = '';
   if(conf){
     placeSprite(side, conf);
     if(drawn) drawn.style.display = 'none';
