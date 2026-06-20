@@ -1514,19 +1514,22 @@ function initClash(){
     float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0));
     return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
   float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<5;i++){ s+=a*noise(p); p=p*2.02+7.0; a*=0.5; } return s; }
-  vec2 segInfo(vec2 p, vec2 a, vec2 b){
-    vec2 pa=p-a, ba=b-a; float t=clamp(dot(pa,ba)/max(dot(ba,ba),1e-5),0.0,1.0);
-    return vec2(distance(p, a+ba*t), t); }
+  vec3 segInfo(vec2 p, vec2 a, vec2 b){
+    vec2 pa=p-a, ba=b-a;
+    float rawT = dot(pa,ba)/max(dot(ba,ba),1e-5);
+    float t = clamp(rawT,0.0,1.0);
+    return vec3(distance(p, a+ba*t), rawT, t); }
   vec3 beam(vec2 p, vec2 a, vec2 c, vec3 col, float t, float dir){
-    vec2 si = segInfo(p, a, c);
-    float thick = mix(0.012, 0.095, pow(si.y,0.8));
-    float wob = (fbm(vec2(si.y*11.0 + dir*t*6.0, dir*3.0))-0.5)*thick*2.2;
-    wob += sin(si.y*42.0 + t*4.0*dir)*thick*0.18;
-    float edge = smoothstep(0.0, 0.08, si.y) * smoothstep(1.0, 0.72, si.y);
+    vec3 si = segInfo(p, a, c);
+    float path = si.z;
+    float thick = mix(0.012, 0.095, pow(path,0.8));
+    float wob = (fbm(vec2(path*11.0 + dir*t*6.0, dir*3.0))-0.5)*thick*2.2;
+    wob += sin(path*42.0 + t*4.0*dir)*thick*0.18;
+    float edge = smoothstep(0.08, 0.20, si.y) * smoothstep(1.0, 0.72, si.y);
     float core = exp(-pow(abs(si.x+wob)/thick, 1.65)) * edge;
     float mist = exp(-pow(abs(si.x+wob)/(thick*2.35), 1.25)) * edge;
-    float streak = 0.55+0.75*fbm(vec2(si.y*18.0 + dir*t*7.0, (si.x+wob)*45.0));
-    return col*(core*mix(0.45,1.35,si.y)*streak + mist*0.26) + vec3(1.0)*core*core*mix(0.03,0.65,si.y);
+    float streak = 0.55+0.75*fbm(vec2(path*18.0 + dir*t*7.0, (si.x+wob)*45.0));
+    return col*(core*mix(0.45,1.35,path)*streak + mist*0.26) + vec3(1.0)*core*core*mix(0.03,0.65,path);
   }
   void main(){
     vec2 uv = gl_FragCoord.xy/uRes;
