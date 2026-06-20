@@ -345,7 +345,7 @@
 
   <!-- Campeón del torneo (izquierda del todo, detrás del luchador izquierdo) -->
   <div class="champion" id="champion">
-    <div class="champ-label">👑 CAMPEÓN DEL TORNEO</div>
+    <div class="champ-label">👑 CAMPEÓN ACTUAL DEL TORNEO</div>
     <div class="champ-card">
       <div class="champ-crown">👑</div>
       <div class="champ-photo-wrap">
@@ -1381,7 +1381,10 @@ function considerChampion(winner){
   }
   return false;
 }
-function clearChampion(){ champion = null; try{ localStorage.removeItem('dbz_champion'); }catch(e){} renderChampion(); }
+function clearChampion(){
+  if(!confirm('¿Seguro que quieres reiniciar el campeón actual del torneo?')) return;
+  champion = null; try{ localStorage.removeItem('dbz_champion'); }catch(e){} renderChampion();
+}
 
 /* ---- scouter: el número de KI sube/baja contando hacia el valor real ---- */
 const KI_SCALE = 1;             // el scouter marca el mismo KI que la barra de energía
