@@ -342,6 +342,7 @@
 <body>
 <div id="app">
   <div class="bg"></div><div class="stars"></div>
+  <audio id="battle-start-audio" src="assets/battle-start.mp3" preload="auto"></audio>
 
   <!-- Campeón del torneo (izquierda del todo, detrás del luchador izquierdo) -->
   <div class="champion" id="champion">
@@ -1409,6 +1410,15 @@ function animateScouters(){
 }
 
 /* ====================== MECÁNICA ====================== */
+function playBattleStartAudio(){
+  const audio = document.getElementById('battle-start-audio');
+  if(!audio) return;
+  audio.volume = 0.18;
+  audio.currentTime = 0;
+  const p = audio.play();
+  if(p && p.catch) p.catch(()=>{});
+}
+
 function clearUsersForSide(side){
   for(const key of Object.keys(userTeam)){
     if(userTeam[key] === side) delete userTeam[key];
@@ -1418,6 +1428,7 @@ function clearUsersForSide(side){
 function pickCharacter(side, name, faceUrl, faceLabel, ownerKey){
   if(ended) return;
   if(!hasPlayableSprite(name)) return;
+  const hadBattle = !!(sides.left.name && sides.right.name);
   clearUsersForSide(side);
   const fillEl = document.getElementById('fill-'+side);
   if(fillEl){ clearTimeout(fillEl._rt); fillEl.style.transition='none'; fillEl.style.transform='scaleX(0)'; void fillEl.offsetWidth; fillEl.style.transition=''; }
@@ -1426,6 +1437,7 @@ function pickCharacter(side, name, faceUrl, faceLabel, ownerKey){
   setFace(side, faceUrl||null, faceLabel||name);
   renderSide(side);
   updateIdle();
+  if(!hadBattle && sides.left.name && sides.right.name) playBattleStartAudio();
 }
 
 function openSide(){
@@ -1668,6 +1680,7 @@ function handleEvent(d){
   if(named && !isGift){
     if(!named) return;
     if(!hasPlayableSprite(named)) return;
+    if(userTeam[userKey]) return;
     pendingPick[userKey] = {name:named, face, user:username, key:userKey};
     return;
   }
