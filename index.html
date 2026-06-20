@@ -281,6 +281,12 @@
   .victory .vmon{height:48vh;}
   .victory .vmon svg{height:100%; width:auto;}
   .victory .vsub{font-size:26px; font-weight:bold; text-shadow:2px 2px 0 #000;}
+  body.victory-clean #clash,
+  body.victory-clean .feed-side,
+  body.victory-clean .duel-users,
+  body.victory-clean .scouter,
+  body.victory-clean .stage,
+  body.victory-clean .queue{display:none !important;}
 
   /* ---------- simulador ---------- */
   #sim{position:absolute; right:10px; top:10px; z-index:50; width:280px;
@@ -1433,6 +1439,7 @@ function popFeed(text, color, side){
 function startTimer(){
   const mins = parseInt(document.getElementById('sim-mins').value)||5;
   DURATION = mins*60; timer = DURATION; ended=false; running=true; window.__clashWin=null;
+  document.body.classList.remove('victory-clean');
   document.getElementById('victory').classList.remove('show');
   const timerEl = document.getElementById('timer');
   timerEl.textContent = fmt(timer);
@@ -1456,6 +1463,7 @@ function tick(){
 }
 function endBattle(forcedSide){
   ended=true;
+  document.body.classList.add('victory-clean');
   const L=sides.left, R=sides.right;
   let win, lose, side;
   if(forcedSide==='left'){ win=L; lose=R; side='left'; }
@@ -1493,6 +1501,7 @@ function declareWinner(side){
 function resetAll(){
   if(timerId) clearInterval(timerId);
   running=false; ended=false; timer=DURATION; window.__clashWin=null;
+  document.body.classList.remove('victory-clean');
   sides.left={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
   sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
   for(const k in userTeam) delete userTeam[k];
