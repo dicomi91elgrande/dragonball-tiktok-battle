@@ -579,6 +579,7 @@ const sides = {
 const userTeam = {};         // username -> 'left'|'right'
 const pendingPick = {};      // username -> personaje elegido por chat, pendiente de regalo
 const challengerEnergy = {}; // username -> energía acumulada antes de entrar a la batalla
+const giftRepeatState = {};  // username+regalo -> último repeatcount visto en combos
 const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
 let timer = DURATION, timerId = null, running = false, ended = false;
 
@@ -1643,6 +1644,7 @@ function resetAll(){
   for(const k in userTeam) delete userTeam[k];
   for(const k in pendingPick) delete pendingPick[k];
   for(const k in challengerEnergy) delete challengerEnergy[k];
+  for(const k in giftRepeatState) delete giftRepeatState[k];
   fightQueue.length = 0;
   renderQueue();
   for(const side of ['left','right']){ const f=document.getElementById('fill-'+side);
@@ -1668,6 +1670,22 @@ function avatarOf(d){
   return '/avatar?u='+encodeURIComponent(a);
 }
 
+function giftEnergyValue(d, userKey){
+  const coins = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
+  const repeat = Number(d.repeatcount)>0 ? Number(d.repeatcount) : 1;
+  const giftKey = d.giftid || d.giftId || d.giftname || d.giftName || 'gift';
+  const key = userKey+'|'+giftKey;
+  const last = giftRepeatState[key] || 0;
+  let delta = 1;
+  if(repeat > 1){
+    if(repeat > last) delta = repeat - last;
+    else if(repeat === last) delta = 0;
+    else delta = repeat;
+  }
+  giftRepeatState[key] = repeat;
+  return Math.max(0, Math.round(coins * delta));
+}
+
 function handleEvent(d){
   const ev = (d.event||'').toLowerCase();
   const userKey = d.username || d.uniqueId || d.userId || d.user || d.nickname || 'alguien';
@@ -1687,9 +1705,8 @@ function handleEvent(d){
 
   // cualquier regalo aporta energía
   if(isGift){
-    const coins = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
-    const repeat = Number(d.repeatcount)>0 ? Number(d.repeatcount) : 1;
-    const value = Math.max(1, Math.round(coins * repeat));
+    const value = giftEnergyValue(d, userKey);
+    if(value <= 0) return;
     let side = userTeam[userKey] || null;
     let energyToAdd = value;
     if(!side){
