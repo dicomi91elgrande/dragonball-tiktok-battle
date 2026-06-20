@@ -286,7 +286,66 @@
   body.victory-clean .duel-users,
   body.victory-clean .scouter,
   body.victory-clean .stage,
+  body.victory-clean .champion,
   body.victory-clean .queue{display:none !important;}
+
+  /* ---------- pantalla de espera / intro animada ---------- */
+  .intro{display:none; position:absolute; inset:0; z-index:9; overflow:hidden; pointer-events:none;}
+  body.intro-on .intro{display:block;}
+  body.intro-on .stage, body.intro-on .scouter, body.intro-on .duel-users,
+  body.intro-on .feed-side, body.intro-on .queue, body.intro-on #clash{display:none !important;}
+  .intro-rays{position:absolute; left:50%; top:38%; width:135vh; height:135vh;
+    transform:translate(-50%,-50%); opacity:.4;
+    background:repeating-conic-gradient(from 0deg, rgba(255,190,40,0) 0deg 6deg, rgba(255,195,55,.5) 6deg 7.5deg);
+    animation:introSpin 16s linear infinite;}
+  @keyframes introSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .intro-glow{position:absolute; left:50%; top:38%; width:78vh; height:78vh; transform:translate(-50%,-50%);
+    pointer-events:none; background:radial-gradient(circle, rgba(255,215,90,.55), rgba(255,140,0,.18) 42%, transparent 66%);
+    animation:introPulse 2.2s ease-in-out infinite;}
+  @keyframes introPulse{50%{transform:translate(-50%,-50%) scale(1.13)}}
+  .intro-ball{position:absolute; left:50%; top:38%; width:27vh; height:27vh; transform:translate(-50%,-50%);
+    border-radius:50%; animation:introBob 3s ease-in-out infinite;
+    background:radial-gradient(circle at 37% 30%, #fff7da 0%, #ffd64f 22%, #ff9d1e 58%, #e57200 100%);
+    box-shadow:0 0 7vh rgba(255,175,45,.85), inset -2.2vh -2.2vh 5vh rgba(170,65,0,.55), inset 1.4vh 1.4vh 3vh rgba(255,255,255,.55);}
+  @keyframes introBob{50%{transform:translate(-50%,-55%)}}
+  .intro-ball .ball-stars{position:absolute; inset:0; display:grid; grid-template-columns:1fr 1fr;
+    place-items:center; padding:5.2vh; color:#d62c1a; font-size:5.2vh; line-height:1;
+    text-shadow:0 .3vh .4vh rgba(120,20,0,.4);}
+  .intro-text{position:absolute; left:4vw; right:4vw; top:64%; text-align:center;}
+  .intro-title{font-size:clamp(30px,5.4vw,72px); font-weight:900; font-style:italic; letter-spacing:1px; color:#fff;
+    text-shadow:0 0 18px #ffae2e, 0 0 42px #ff7a00, 3px 3px 0 #000; animation:introText 1.6s ease-in-out infinite;}
+  @keyframes introText{50%{transform:scale(1.045); text-shadow:0 0 30px #ffd23f, 0 0 64px #ff9b1c, 3px 3px 0 #000}}
+  .intro-sub{margin-top:2.2vh; display:inline-block; font-size:clamp(16px,2.5vw,30px); font-weight:bold; color:#fff;
+    padding:.55em 1.2em; border-radius:999px; background:rgba(0,0,0,.42); border:2px solid #ffd23f;
+    box-shadow:0 0 20px rgba(255,200,60,.5); text-shadow:1px 1px 0 #000;}
+  .intro-spark{position:absolute; bottom:0; width:7px; height:7px; border-radius:50%;
+    background:#ffd23f; box-shadow:0 0 10px #ffcf4a; opacity:0; animation:introRise 2.6s linear infinite;}
+  @keyframes introRise{0%{transform:translateY(0) scale(1); opacity:0} 15%{opacity:1}
+    100%{transform:translateY(-70vh) scale(.2); opacity:0}}
+
+  /* ---------- campeón del torneo (izquierda, detrás del luchador) ---------- */
+  .champion{display:none; position:absolute; left:0.8vw; top:12vh; z-index:1; width:min(17vw,205px);
+    pointer-events:none; text-align:center;}
+  .champion.on{display:block;}
+  .champ-label{font-size:clamp(10px,1.2vw,15px); font-weight:900; letter-spacing:1px; color:#ffd23f;
+    text-shadow:0 0 8px rgba(255,180,40,.7), 1px 1px 0 #000; margin-bottom:7px; line-height:1.1;}
+  .champ-card{position:relative; padding:16px 10px 11px; border-radius:14px;
+    background:linear-gradient(160deg, rgba(44,32,8,.82), rgba(14,11,18,.7));
+    border:2px solid #ffce3a; box-shadow:0 0 18px rgba(255,190,50,.4), inset 0 0 22px rgba(0,0,0,.5);}
+  .champ-crown{position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:24px;
+    filter:drop-shadow(0 2px 2px #000); animation:champFloat 2.6s ease-in-out infinite;}
+  @keyframes champFloat{50%{transform:translateX(-50%) translateY(-3px)}}
+  .champ-photo-wrap{position:relative; width:66px; height:66px; margin:0 auto 8px; border-radius:50%;
+    border:3px solid #ffd23f; box-shadow:0 0 14px rgba(255,190,50,.7); overflow:hidden; background:#23252f;}
+  .champ-photo{width:100%; height:100%; object-fit:cover; display:none;}
+  .champ-initial{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:30px; font-weight:bold; color:#fff;}
+  .champ-name{font-size:clamp(13px,1.5vw,19px); font-weight:bold; color:#fff; text-shadow:1px 1px 0 #000;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .champ-char{font-size:clamp(11px,1.2vw,14px); color:#ffd9a0; text-shadow:1px 1px 0 #000; margin-top:1px;}
+  .champ-ki{margin-top:6px; font-family:"Consolas",monospace; font-weight:bold; color:#ffe24d;
+    font-size:clamp(12px,1.4vw,17px); text-shadow:0 0 8px rgba(255,200,60,.6), 1px 1px 0 #000;}
+  .champ-ki b{font-size:1.18em;}
 
   /* ---------- simulador ---------- */
   #sim{position:absolute; right:10px; top:10px; z-index:50; width:280px;
@@ -306,6 +365,37 @@
 <body>
 <div id="app">
   <div class="bg"></div><div class="stars"></div>
+
+  <!-- Campeón del torneo (izquierda del todo, detrás del luchador izquierdo) -->
+  <div class="champion" id="champion">
+    <div class="champ-label">👑 CAMPEÓN DEL TORNEO</div>
+    <div class="champ-card">
+      <div class="champ-crown">👑</div>
+      <div class="champ-photo-wrap">
+        <img class="champ-photo" id="champ-photo" alt="">
+        <span class="champ-initial" id="champ-initial">?</span>
+      </div>
+      <div class="champ-name" id="champ-name">—</div>
+      <div class="champ-char" id="champ-char"></div>
+      <div class="champ-ki"><b id="champ-ki">0</b> KI máx</div>
+    </div>
+  </div>
+
+  <!-- Pantalla de espera / intro (al inicio y tras cada reset) -->
+  <div class="intro" id="intro">
+    <div class="intro-rays"></div>
+    <div class="intro-glow"></div>
+    <div class="intro-ball"><div class="ball-stars">★★★★</div></div>
+    <span class="intro-spark" style="left:30%; animation-delay:0s"></span>
+    <span class="intro-spark" style="left:44%; animation-delay:.6s"></span>
+    <span class="intro-spark" style="left:57%; animation-delay:1.2s"></span>
+    <span class="intro-spark" style="left:68%; animation-delay:1.8s"></span>
+    <div class="intro-text">
+      <div class="intro-title">¡Elige tu personaje de Dragon Ball<br>en el chat y sal a luchar!!</div>
+      <div class="intro-sub">💬 Escribe su nombre en el chat</div>
+    </div>
+  </div>
+
   <canvas id="clash"></canvas>
   <div class="feed-side" id="feed-left"></div>
   <div class="feed-side" id="feed-right"></div>
@@ -429,6 +519,10 @@
     <div class="row">
       <button onclick="declareWinner('left')">Gana ◄</button>
       <button onclick="declareWinner('right')">► Gana</button>
+    </div>
+    <div class="lbl">Campeón del torneo</div>
+    <div class="row">
+      <button onclick="clearChampion()">🗑 Reiniciar campeón</button>
     </div>
   </div>
 </div>
@@ -1266,6 +1360,52 @@ function renderSide(side){
 
 function renderAll(){ renderSide('left'); renderSide('right'); }
 
+/* ====================== INTRO / PANTALLA DE ESPERA ====================== */
+// idle = sin luchadores y sin batalla terminada -> se muestra la intro animada
+function updateIdle(){
+  const idle = !sides.left.name && !sides.right.name && !ended;
+  document.body.classList.toggle('intro-on', idle);
+}
+
+/* ====================== CAMPEÓN DEL TORNEO ====================== */
+// récord persistente (localStorage del navegador/OBS): quien logró el KI máximo.
+let champion = null;
+function loadChampion(){
+  try{ champion = JSON.parse(localStorage.getItem('dbz_champion') || 'null'); }
+  catch(e){ champion = null; }
+  renderChampion();
+}
+function saveChampion(){ try{ localStorage.setItem('dbz_champion', JSON.stringify(champion)); }catch(e){} }
+function renderChampion(){
+  const el = document.getElementById('champion'); if(!el) return;
+  if(!champion || !champion.user){ el.classList.remove('on'); return; }
+  el.classList.add('on');
+  const img = document.getElementById('champ-photo');
+  const ini = document.getElementById('champ-initial');
+  ini.textContent = (champion.user||'?').slice(0,1).toUpperCase();
+  if(champion.face){
+    img.onerror = ()=>{ img.style.display='none'; ini.style.display='flex'; };
+    img.onload  = ()=>{ img.style.display='block'; ini.style.display='none'; };
+    img.src = champion.face;
+  } else { img.removeAttribute('src'); img.style.display='none'; ini.style.display='flex'; }
+  document.getElementById('champ-name').textContent = champion.user || '—';
+  document.getElementById('champ-char').textContent = champion.character ? ('con '+champion.character) : '';
+  document.getElementById('champ-ki').textContent = (champion.maxKI||0).toLocaleString('es-ES');
+}
+// actualiza el campeón si el ganador supera el KI máximo. Devuelve true si hay nuevo récord.
+function considerChampion(winner){
+  if(!winner || !winner.name) return false;
+  const ki = Math.round(winner.energy);
+  if(ki <= 0) return false;
+  if(!champion || ki > (champion.maxKI||0)){
+    champion = { user: winner.user || winner.name, face: winner.face || null, character: winner.name, maxKI: ki };
+    saveChampion(); renderChampion();
+    return true;
+  }
+  return false;
+}
+function clearChampion(){ champion = null; try{ localStorage.removeItem('dbz_champion'); }catch(e){} renderChampion(); }
+
 /* ---- scouter: el número de KI sube/baja contando hacia el valor real ---- */
 const KI_SCALE = 1;             // el scouter marca el mismo KI que la barra de energía
 const kiShown = {left:0, right:0};
@@ -1305,6 +1445,7 @@ function pickCharacter(side, name, faceUrl, faceLabel, ownerKey){
   if(ownerKey || faceLabel) userTeam[ownerKey || faceLabel] = side;
   setFace(side, faceUrl||null, faceLabel||name);
   renderSide(side);
+  updateIdle();
 }
 
 function openSide(){
@@ -1463,6 +1604,7 @@ function tick(){
 }
 function endBattle(forcedSide){
   ended=true;
+  updateIdle();
   document.body.classList.add('victory-clean');
   const L=sides.left, R=sides.right;
   let win, lose, side;
@@ -1485,8 +1627,10 @@ function endBattle(forcedSide){
   vmon.innerHTML = document.getElementById('mon-'+side).innerHTML;
   const vsvg = vmon.querySelector('svg');
   if(vsvg) vsvg.style.filter = 'drop-shadow(0 0 28px '+ph.glow+')';
-  document.getElementById('v-sub').textContent =
-    win.name+' · '+ph.name+' · '+Math.round(win.energy)+' de energía';
+  const newRecord = considerChampion(win);   // ¿supera el KI máximo del torneo?
+  let sub = win.name+' · '+ph.name+' · '+Math.round(win.energy)+' KI';
+  if(newRecord) sub += '   ·   👑 ¡NUEVO CAMPEÓN!';
+  document.getElementById('v-sub').textContent = sub;
   v.classList.add('show');
 }
 
@@ -1520,6 +1664,8 @@ function resetAll(){
   document.getElementById('timer').classList.remove('low');
   setFace('left', null, '?'); setFace('right', null, '?');
   renderAll();
+  renderChampion();   // el campeón persiste entre batallas
+  updateIdle();       // vuelve la pantalla de espera
 }
 
 /* ====================== EVENTOS TikFinity (SSE) ====================== */
@@ -1760,6 +1906,8 @@ injectMonigote('left'); injectMonigote('right');
 setFace('left', null, '?'); setFace('right', null, '?');
 fillSelects();
 renderAll();
+loadChampion();
+updateIdle();
 initClash();
 startLightning();
 animateScouters();
