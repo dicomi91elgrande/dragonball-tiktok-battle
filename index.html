@@ -972,6 +972,23 @@ const SPRITES = {
     'Definitivo':{f:'cell-form3',iw:535,ih:735,cx:23,cy:11,cw:511,ch:687,hx:465,hy:240,scale:1.89,y:88,bob:true},
   },
 };
+const spriteImageCache = {};
+function spriteUrl(file){ return 'assets/'+file+'.png'; }
+function preloadSprites(){
+  const seen = new Set();
+  for(const phases of Object.values(SPRITES)){
+    for(const conf of Object.values(phases)){
+      if(!conf || !conf.f) continue;
+      const url = spriteUrl(conf.f);
+      if(seen.has(url)) continue;
+      seen.add(url);
+      const img = new Image();
+      img.src = url;
+      spriteImageCache[url] = img;
+    }
+  }
+}
+preloadSprites();
 function placeSprite(side, conf){
   const t = SPR_T;
   const feetImg = conf.cy + conf.ch;
@@ -984,14 +1001,20 @@ function placeSprite(side, conf){
   const drawn = document.getElementById('drawn-'+side);
   const sg = document.getElementById('sprite-'+side);
   const fp = document.getElementById('firePoint-'+side);
-  const url = 'assets/'+conf.f+'.png';
+  const url = spriteUrl(conf.f);
+  const prevUrl = csp.getAttribute('href') || '';
+  const changed = prevUrl !== url;
+  const cached = spriteImageCache[url]?.complete && spriteImageCache[url]?.naturalWidth > 0;
+  if(changed && !cached) csp.style.display = 'none';
   csp.onerror = ()=>{
+    if(csp.getAttribute('href') !== url) return;
     csp.style.display = 'none';
     if(sg) sg.classList.remove('sprite-bob');
     if(drawn) drawn.style.display = '';
     if(fp){ fp.setAttribute('cx', 208); fp.setAttribute('cy', 145); }
   };
   csp.onload = ()=>{
+    if(csp.getAttribute('href') !== url) return;
     csp.style.display = '';
     if(drawn) drawn.style.display = 'none';
   };
@@ -1001,7 +1024,7 @@ function placeSprite(side, conf){
   csp.setAttribute('x', X.toFixed(1)); csp.setAttribute('y', Y.toFixed(1));
   csp.setAttribute('width', (conf.iw*Sc).toFixed(1));
   csp.setAttribute('height', (conf.ih*Sc).toFixed(1));
-  csp.style.display = '';
+  if(!changed || cached) csp.style.display = '';
   if(fp){ fp.setAttribute('cx', (X+conf.hx*Sc).toFixed(1));
           fp.setAttribute('cy', (Y+conf.hy*Sc).toFixed(1)); }
 }
