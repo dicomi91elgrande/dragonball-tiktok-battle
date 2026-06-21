@@ -119,7 +119,8 @@
     text-shadow:0 0 14px #ff3b3b, 0 0 6px var(--sc), 1px 1px 0 #000;}
   @keyframes kiBlinkSlow{50%{opacity:.35}}
   @keyframes kiBlinkFast{50%{opacity:.18}}
-  .sc-unit{font-size:12px; font-weight:bold; color:var(--sc); opacity:.85;}
+  .sc-unit{font-size:16px; font-weight:900; color:#ffe24d; opacity:1;
+    text-shadow:0 0 10px var(--sc), 1px 1px 0 #000;}
   .sc-user{display:none; max-width:180px; margin-top:3px; font-size:12px; font-weight:bold; color:#fff;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.9;
     text-shadow:0 0 7px var(--sc), 1px 1px 0 #000;}
@@ -309,6 +310,8 @@
   .champ-card{position:relative; padding:16px 10px 11px; border-radius:14px;
     background:linear-gradient(160deg, rgba(44,32,8,.82), rgba(14,11,18,.7));
     border:2px solid #ffce3a; box-shadow:0 0 18px rgba(255,190,50,.4), inset 0 0 22px rgba(0,0,0,.5);}
+  .champ-card.swap{animation:champSwap .55s ease-out;}
+  @keyframes champSwap{0%{opacity:.35; transform:scale(.98)}100%{opacity:1; transform:scale(1)}}
   .champ-crown{position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:24px;
     filter:drop-shadow(0 2px 2px #000); animation:champFloat 2.6s ease-in-out infinite;}
   @keyframes champFloat{50%{transform:translateX(-50%) translateY(-3px)}}
@@ -354,7 +357,7 @@
   body.stream-vertical .sc-avatar{width:66px; height:66px;}
   body.stream-vertical .sc-tag{font-size:13px;}
   body.stream-vertical .sc-ki{font-size:42px;}
-  body.stream-vertical .sc-unit{font-size:15px;}
+  body.stream-vertical .sc-unit{font-size:19px;}
   body.stream-vertical .sc-bars i{height:7px;}
 
   body.stream-vertical .center{padding-top:13.7cqh; min-width:96px; gap:4px;}
@@ -407,7 +410,7 @@
   body.stream-band .sc-avatar{width:46px; height:46px;}
   body.stream-band .sc-tag{font-size:10px;}
   body.stream-band .sc-ki{font-size:30px;}
-  body.stream-band .sc-unit{font-size:12px;}
+  body.stream-band .sc-unit{font-size:16px;}
   body.stream-band .sc-bars i{height:4px;}
 
   body.stream-band .center{padding-top:18cqh; min-width:110px; gap:3px;}
@@ -459,7 +462,7 @@
       </div>
       <div class="champ-name" id="champ-name">—</div>
       <div class="champ-char" id="champ-char"></div>
-      <div class="champ-ki"><b id="champ-ki">0</b> KI máx</div>
+      <div class="champ-ki"><b id="champ-ki">0 KI máx</b></div>
     </div>
   </div>
 
@@ -677,14 +680,15 @@ function phaseSlug(n){ return slug(n); }
 const GIFT_DEFAULT = 10;     // energía si un regalo no trae valor en coins
 let DURATION = 90;           // segundos del temporizador
 const sides = {
-  left:  {name:null, energy:0, phase:0, supporters:[]},
-  right: {name:null, energy:0, phase:0, supporters:[]},
+  left:  {name:null, energy:0, phase:0, supporters:[], face:null, user:null, ownerKey:null, streak:0},
+  right: {name:null, energy:0, phase:0, supporters:[], face:null, user:null, ownerKey:null, streak:0},
 };
 const userTeam = {};         // username -> 'left'|'right'
 const pendingPick = {};      // username -> personaje elegido por chat, pendiente de regalo
 const challengerEnergy = {}; // username -> energía acumulada antes de entrar a la batalla
 const giftRepeatState = {};  // username+regalo -> último repeatcount visto en combos
 const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
+let carryWinner = null;      // ganador que se queda tras reset para defender racha
 let timer = DURATION, timerId = null, running = false, ended = false;
 
 /* ====================== RENDER ====================== */
@@ -810,7 +814,8 @@ function setDuelUser(side){
   const s = sides[side];
   const el = document.getElementById('duel-user-'+side);
   if(!el) return;
-  el.textContent = s.name ? (s.user || s.name || '') : '';
+  const streak = s.streak ? ' (X'+s.streak+')' : '';
+  el.textContent = s.name ? ((s.user || s.name || '') + streak) : '';
 }
 
 /* ---- sombreado de color + rayos eléctricos (SS2+) ---- */
@@ -1451,45 +1456,83 @@ function renderAll(){ renderSide('left'); renderSide('right'); }
 function updateIdle(){ document.body.classList.remove('intro-on'); }
 
 /* ====================== CAMPEÓN DEL TORNEO ====================== */
-// récord persistente (localStorage del navegador/OBS): quien logró el KI máximo.
+// récord persistente (localStorage del navegador/OBS): máximo KI y mejor racha.
 let champion = null;
+let championView = 0;
+let championTimer = null;
+function normalizeChampion(data){
+  if(!data) return {ki:null, streak:null};
+  if(data.ki || data.streak) return {ki:data.ki||null, streak:data.streak||null};
+  if(data.user) return {ki:data, streak:null}; // migración del formato antiguo
+  return {ki:null, streak:null};
+}
 function loadChampion(){
-  try{ champion = JSON.parse(localStorage.getItem('dbz_champion') || 'null'); }
-  catch(e){ champion = null; }
+  try{ champion = normalizeChampion(JSON.parse(localStorage.getItem('dbz_champion') || 'null')); }
+  catch(e){ champion = {ki:null, streak:null}; }
   renderChampion();
 }
 function saveChampion(){ try{ localStorage.setItem('dbz_champion', JSON.stringify(champion)); }catch(e){} }
+function championRecords(){
+  if(!champion) return [];
+  const records = [];
+  if(champion.ki && champion.ki.user) records.push({type:'ki', data:champion.ki});
+  if(champion.streak && champion.streak.user) records.push({type:'streak', data:champion.streak});
+  return records;
+}
 function renderChampion(){
   const el = document.getElementById('champion'); if(!el) return;
-  if(!champion || !champion.user){ el.classList.remove('on'); return; }
+  const records = championRecords();
+  if(!records.length){ el.classList.remove('on'); return; }
+  const current = records[championView % records.length];
+  const data = current.data;
   el.classList.add('on');
+  const card = el.querySelector('.champ-card');
+  if(card){ card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap'); }
   const img = document.getElementById('champ-photo');
   const ini = document.getElementById('champ-initial');
-  ini.textContent = (champion.user||'?').slice(0,1).toUpperCase();
-  if(champion.face){
+  ini.textContent = (data.user||'?').slice(0,1).toUpperCase();
+  if(data.face){
     img.onerror = ()=>{ img.style.display='none'; ini.style.display='flex'; };
     img.onload  = ()=>{ img.style.display='block'; ini.style.display='none'; };
-    img.src = champion.face;
+    img.src = data.face;
   } else { img.removeAttribute('src'); img.style.display='none'; ini.style.display='flex'; }
-  document.getElementById('champ-name').textContent = champion.user || '—';
-  document.getElementById('champ-char').textContent = champion.character ? ('con '+champion.character) : '';
-  document.getElementById('champ-ki').textContent = (champion.maxKI||0).toLocaleString('es-ES');
+  document.getElementById('champ-name').textContent = data.user || '—';
+  document.getElementById('champ-char').textContent = data.character ? ('con '+data.character) : '';
+  const metric = document.getElementById('champ-ki');
+  if(current.type === 'streak') metric.textContent = 'racha x'+(data.wins||0);
+  else metric.textContent = (data.maxKI||0).toLocaleString('es-ES')+' KI máx';
 }
-// actualiza el campeón si el ganador supera el KI máximo. Devuelve true si hay nuevo récord.
+function startChampionRotation(){
+  if(championTimer) clearInterval(championTimer);
+  championTimer = setInterval(()=>{
+    const records = championRecords();
+    if(records.length < 2) return;
+    championView = (championView + 1) % records.length;
+    renderChampion();
+  }, 4200);
+}
+// actualiza récords si el ganador supera el KI máximo o la mejor racha. Devuelve true si hay nuevo récord.
 function considerChampion(winner){
   if(!winner || !winner.name) return false;
   const ki = Math.round(winner.energy);
-  if(ki <= 0) return false;
-  if(!champion || ki > (champion.maxKI||0)){
-    champion = { user: winner.user || winner.name, face: winner.face || null, character: winner.name, maxKI: ki };
-    saveChampion(); renderChampion();
-    return true;
+  champion = normalizeChampion(champion);
+  let changed = false;
+  if(ki > 0 && (!champion.ki || ki > (champion.ki.maxKI||0))){
+    champion.ki = { user: winner.user || winner.name, face: winner.face || null, character: winner.name, maxKI: ki };
+    changed = true;
   }
-  return false;
+  const wins = winner.streak || 0;
+  if(wins > 0 && (!champion.streak || wins > (champion.streak.wins||0))){
+    champion.streak = { user: winner.user || winner.name, face: winner.face || null, character: winner.name, wins };
+    changed = true;
+  }
+  if(changed){ saveChampion(); renderChampion(); }
+  return changed;
 }
 function clearChampion(){
   if(!confirm('¿Seguro que quieres reiniciar el campeón actual del torneo?')) return;
-  champion = null; try{ localStorage.removeItem('dbz_champion'); }catch(e){} renderChampion();
+  champion = {ki:null, streak:null}; championView = 0;
+  try{ localStorage.removeItem('dbz_champion'); }catch(e){} renderChampion();
 }
 
 /* ---- scouter: el número de KI sube/baja contando hacia el valor real ---- */
@@ -1540,15 +1583,36 @@ function clearUsersForSide(side){
   }
 }
 
-function pickCharacter(side, name, faceUrl, faceLabel, ownerKey){
+function snapshotWinner(side){
+  const s = sides[side];
+  if(!s || !s.name) return null;
+  return {
+    side,
+    name:s.name,
+    face:s.face||null,
+    user:s.user||s.name,
+    key:s.ownerKey||s.user||s.name,
+    streak:s.streak||0
+  };
+}
+
+function canChangeCarriedCharacter(userKey, side){
+  const s = sides[side];
+  return !!(s && s.name && s.ownerKey === userKey && (s.streak||0) > 0 && s.energy <= 0 && !running && !ended);
+}
+
+function pickCharacter(side, name, faceUrl, faceLabel, ownerKey, opts){
   if(ended) return;
   if(!hasPlayableSprite(name)) return;
+  opts = opts || {};
   const hadBattle = !!(sides.left.name && sides.right.name);
   clearUsersForSide(side);
   const fillEl = document.getElementById('fill-'+side);
   if(fillEl){ clearTimeout(fillEl._rt); fillEl.style.transition='none'; fillEl.style.transform='scaleX(0)'; void fillEl.offsetWidth; fillEl.style.transition=''; }
-  sides[side] = {name, energy:0, phase:0, supporters:[], face:faceUrl||null, user:faceLabel||name};
-  if(ownerKey || faceLabel) userTeam[ownerKey || faceLabel] = side;
+  const key = ownerKey || faceLabel || name;
+  sides[side] = {name, energy:0, phase:0, supporters:[], face:faceUrl||null,
+    user:faceLabel||name, ownerKey:key, streak:opts.streak||0};
+  if(key) userTeam[key] = side;
   setFace(side, faceUrl||null, faceLabel||name);
   renderSide(side);
   updateIdle();
@@ -1725,10 +1789,12 @@ function endBattle(forcedSide){
   const v=document.getElementById('victory');
   const t=document.getElementById('v-title');
   const vmon=document.getElementById('v-mon');
-  if(!win || !win.name){ t.textContent='¡EMPATE!'; t.style.color='#ffd23f';
+  if(!win || !win.name){ carryWinner = null; t.textContent='¡EMPATE!'; t.style.color='#ffd23f';
     vmon.innerHTML='';
     document.getElementById('v-sub').textContent=''; v.classList.add('show'); return; }
   const ph=ladderOf(win.name)[win.phase];
+  win.streak = (win.streak||0) + 1;
+  carryWinner = snapshotWinner(side);
   window.__clashWin = side;   // el haz ganador arrolla al perdedor
   t.textContent='¡'+(win.user||win.name).toUpperCase()+' GANA!';
   t.style.color=ph.glow;
@@ -1755,15 +1821,24 @@ function declareWinner(side){
 function resetAll(){
   if(timerId) clearInterval(timerId);
   running=false; ended=false; timer=DURATION; window.__clashWin=null;
+  const carry = carryWinner ? {...carryWinner} : null;
   stopBattleMusic();
   document.body.classList.remove('victory-clean');
-  sides.left={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
-  sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null};
+  sides.left={name:null,energy:0,phase:0,supporters:[],face:null,user:null,ownerKey:null,streak:0};
+  sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null,ownerKey:null,streak:0};
   for(const k in userTeam) delete userTeam[k];
   for(const k in pendingPick) delete pendingPick[k];
   for(const k in challengerEnergy) delete challengerEnergy[k];
   for(const k in giftRepeatState) delete giftRepeatState[k];
   fightQueue.length = 0;
+  if(carry && hasPlayableSprite(carry.name)){
+    const side = carry.side || 'left';
+    sides[side] = {name:carry.name, energy:0, phase:0, supporters:[], face:carry.face||null,
+      user:carry.user||carry.name, ownerKey:carry.key||carry.user||carry.name, streak:carry.streak||0};
+    userTeam[sides[side].ownerKey] = side;
+  } else {
+    carryWinner = null;
+  }
   renderQueue();
   for(const side of ['left','right']){ const f=document.getElementById('fill-'+side);
     if(f){ clearTimeout(f._rt); f.style.transition='none'; f.style.transform='scaleX(0)'; void f.offsetWidth; f.style.transition=''; } }
@@ -1774,7 +1849,8 @@ function resetAll(){
   document.getElementById('v-mon').innerHTML='';
   document.getElementById('timer').textContent=fmt(timer);
   document.getElementById('timer').classList.remove('low');
-  setFace('left', null, '?'); setFace('right', null, '?');
+  setFace('left', sides.left.face||null, sides.left.user||'?');
+  setFace('right', sides.right.face||null, sides.right.user||'?');
   renderAll();
   renderChampion();   // el campeón persiste entre batallas
   updateIdle();       // vuelve la pantalla de espera
@@ -1816,7 +1892,15 @@ function handleEvent(d){
   if(named && !isGift){
     if(!named) return;
     if(!hasPlayableSprite(named)) return;
-    if(userTeam[userKey]) return;
+    const currentSide = userTeam[userKey] || null;
+    if(currentSide){
+      if(canChangeCarriedCharacter(userKey, currentSide)){
+        const keepStreak = sides[currentSide].streak || 0;
+        pickCharacter(currentSide, named, face || sides[currentSide].face, username, userKey, {streak:keepStreak});
+        carryWinner = snapshotWinner(currentSide);
+      }
+      return;
+    }
     pendingPick[userKey] = {name:named, face, user:username, key:userKey};
     return;
   }
@@ -2037,6 +2121,7 @@ setFace('left', null, '?'); setFace('right', null, '?');
 fillSelects();
 renderAll();
 loadChampion();
+startChampionRotation();
 updateIdle();
 initClash();
 startLightning();
