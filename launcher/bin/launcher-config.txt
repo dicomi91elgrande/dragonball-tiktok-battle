@@ -1,0 +1,5 @@
+url=https://dragonball-tiktok-battle.onrender.com/?obs=1&stream=band
+# Tamano horizontal recomendado para TikTok/OBS:
+width=1280
+height=720
+scale=1

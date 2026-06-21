@@ -337,6 +337,110 @@
   #sim button:hover{background:#2e3a63;}
   #sim .lbl{opacity:.7; font-size:11px; text-transform:uppercase; letter-spacing:.5px;}
   body.obs #sim{display:none;}
+
+  /* ---------- modo stream vertical 9:16 (?vertical=1) ---------- */
+  body.stream-vertical{background:#000;}
+  body.stream-vertical #app{width:min(100vw, 56.25vh); height:min(100vh, 177.7778vw);
+    margin:auto; overflow:hidden; container-type:size; background:#05060d;}
+  body.stream-vertical .stage{grid-template-columns:1fr 12cqw 1fr; padding:0 2cqw 3cqh;}
+  body.stream-vertical .duel-users{left:3.5cqw; right:3.5cqw; top:1.2cqh; gap:10px;}
+  body.stream-vertical .duel-user{font-size:clamp(22px,5.8cqw,38px);}
+  body.stream-vertical .vs{font-size:clamp(24px,6.2cqw,42px);}
+
+  body.stream-vertical .scouter{top:5.2cqh; width:43cqw; max-width:none;}
+  body.stream-vertical #scouter-left{left:3cqw; right:auto;}
+  body.stream-vertical #scouter-right{right:3cqw; left:auto;}
+  body.stream-vertical .scouter .lens{padding:10px 18px 12px;}
+  body.stream-vertical .sc-avatar{width:66px; height:66px;}
+  body.stream-vertical .sc-tag{font-size:13px;}
+  body.stream-vertical .sc-ki{font-size:42px;}
+  body.stream-vertical .sc-unit{font-size:15px;}
+  body.stream-vertical .sc-bars i{height:7px;}
+
+  body.stream-vertical .center{padding-top:13.7cqh; min-width:96px; gap:4px;}
+  body.stream-vertical .timer{font-size:38px;}
+  body.stream-vertical .feed{width:120px; height:22cqh;}
+
+  body.stream-vertical .charbox{width:46cqw; height:52cqh; margin-bottom:26cqh;}
+  body.stream-vertical .monigote{width:44cqw; height:52cqh;}
+  body.stream-vertical #box-left{transform:translateX(16cqw);}
+  body.stream-vertical #box-right{transform:translateX(-16cqw);}
+  body.stream-vertical .empty-slot .empty-ring{width:34cqw;}
+  body.stream-vertical .empty-slot span{font-size:clamp(20px,5.8cqw,36px);}
+
+  body.stream-vertical .stage > .nameplate{bottom:2.3cqh;}
+  body.stream-vertical .nameplate{width:42cqw; gap:7px;}
+  body.stream-vertical #np-left{right:50%; padding-right:10px;}
+  body.stream-vertical #np-right{left:50%; padding-left:10px;}
+  body.stream-vertical .avatar{width:50px; height:50px;}
+  body.stream-vertical .cname{font-size:clamp(30px,8cqw,54px);}
+  body.stream-vertical .phase{font-size:clamp(20px,5cqw,34px); min-height:28px;}
+  body.stream-vertical .ebar{height:32px; border-radius:18px;}
+  body.stream-vertical .estat{font-size:clamp(17px,4.2cqw,27px);}
+  body.stream-vertical .supporters{font-size:clamp(16px,3.4cqw,23px); height:28px;}
+  body.stream-vertical .queue{bottom:8px; font-size:18px; width:94cqw;}
+
+  body.stream-vertical .champion{left:2cqw; top:12.8cqh; width:27cqw;}
+  body.stream-vertical .champ-card{padding:20px 12px 14px; border-radius:18px;}
+  body.stream-vertical .champ-photo-wrap{width:92px; height:92px;}
+  body.stream-vertical .champ-name{font-size:clamp(18px,4.8cqw,30px);}
+  body.stream-vertical .champ-char{font-size:clamp(14px,3.4cqw,22px);}
+  body.stream-vertical .champ-ki{font-size:clamp(17px,4.1cqw,26px);}
+
+  body.stream-vertical #feed-left{left:45%; top:33%;}
+  body.stream-vertical #feed-right{left:55%; top:46%;}
+  body.stream-vertical .gift-pop{font-size:20px; padding:7px 14px;}
+
+  /* ---------- modo stream franja horizontal 1280x720 (?stream=band) ---------- */
+  body.stream-band{background:#000;}
+  body.stream-band #app{width:100vw; height:60vh; margin:20vh 0; overflow:hidden;
+    container-type:size; background:#05060d;}
+  body.stream-band .stage{grid-template-columns:1fr 110px 1fr; padding:0 2.2cqw 2cqh;}
+  body.stream-band .duel-users{left:22cqw; right:22cqw; top:1.2cqh; gap:8px;}
+  body.stream-band .duel-user{font-size:clamp(16px,2.35cqh,24px);}
+  body.stream-band .vs{font-size:clamp(18px,2.7cqh,27px);}
+
+  body.stream-band .scouter{top:7cqh; width:28cqw; max-width:360px;}
+  body.stream-band #scouter-left{right:52%;}
+  body.stream-band #scouter-right{left:52%;}
+  body.stream-band .scouter .lens{padding:6px 14px 8px;}
+  body.stream-band .sc-avatar{width:46px; height:46px;}
+  body.stream-band .sc-tag{font-size:10px;}
+  body.stream-band .sc-ki{font-size:30px;}
+  body.stream-band .sc-unit{font-size:12px;}
+  body.stream-band .sc-bars i{height:4px;}
+
+  body.stream-band .center{padding-top:18cqh; min-width:110px; gap:3px;}
+  body.stream-band .timer{font-size:34px;}
+  body.stream-band .feed{width:120px; height:18cqh;}
+
+  body.stream-band .charbox{width:34cqw; height:50cqh; margin-bottom:17cqh;}
+  body.stream-band .monigote{width:30cqw; height:50cqh;}
+  body.stream-band #box-left{transform:translateX(12cqw);}
+  body.stream-band #box-right{transform:translateX(-12cqw);}
+
+  body.stream-band .stage > .nameplate{bottom:2cqh;}
+  body.stream-band .nameplate{width:min(25cqw,300px); gap:4px;}
+  body.stream-band #np-left{right:51%; padding-right:10px;}
+  body.stream-band #np-right{left:51%; padding-left:10px;}
+  body.stream-band .avatar{width:34px; height:34px;}
+  body.stream-band .cname{font-size:clamp(22px,4.8cqh,34px);}
+  body.stream-band .phase{font-size:clamp(15px,3cqh,22px); min-height:20px;}
+  body.stream-band .ebar{height:18px;}
+  body.stream-band .estat{font-size:clamp(12px,2.4cqh,17px);}
+  body.stream-band .supporters{font-size:clamp(11px,2.2cqh,15px); height:18px;}
+  body.stream-band .queue{bottom:4px; width:76cqw; font-size:11px;}
+
+  body.stream-band .champion{left:1cqw; top:12cqh; width:16cqw;}
+  body.stream-band .champ-card{padding:12px 8px 8px;}
+  body.stream-band .champ-photo-wrap{width:54px; height:54px;}
+  body.stream-band .champ-name{font-size:clamp(12px,2.6cqh,17px);}
+  body.stream-band .champ-char{font-size:clamp(10px,2.1cqh,14px);}
+  body.stream-band .champ-ki{font-size:clamp(11px,2.3cqh,15px);}
+
+  body.stream-band #feed-left{left:47%; top:27%;}
+  body.stream-band #feed-right{left:53%; top:42%;}
+  body.stream-band .gift-pop{font-size:14px; padding:4px 10px;}
 </style>
 </head>
 <body>
@@ -1926,6 +2030,8 @@ document.addEventListener('keydown',(e)=>{
 /* ====================== INIT ====================== */
 const params = new URLSearchParams(location.search);
 if(params.get('obs')==='1') document.body.classList.add('obs');
+if(params.get('vertical')==='1' || params.get('stream')==='vertical') document.body.classList.add('stream-vertical');
+if(params.get('stream')==='band' || params.get('band')==='1') document.body.classList.add('stream-band');
 injectMonigote('left'); injectMonigote('right');
 setFace('left', null, '?'); setFace('right', null, '?');
 fillSelects();
