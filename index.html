@@ -1673,10 +1673,17 @@ function queueKey(username, name){ return slug(username)+'|'+slug(name); }
 function renderQueue(){
   const el = document.getElementById('queue');
   if(!el) return;
-  if(!fightQueue.length){ el.innerHTML=''; return; }
-  el.innerHTML = '<b>Cola:</b> '+fightQueue.slice(0,8).map(q=>
-    '<span>'+q.user.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+' - '+q.name+'</span>'
-  ).join(' · ')+(fightQueue.length>8?' · ...':'');
+  const esc = s => String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  // retadores que ya están sumando regalos pero aún no han entrado (su energía cuenta y se ve)
+  const pend = Object.keys(challengerEnergy)
+    .filter(k => (challengerEnergy[k]||0) > 0)
+    .map(k => ({ user:(pendingPick[k] && pendingPick[k].user) || k,
+                 name:(pendingPick[k] && pendingPick[k].name) || '',
+                 e:Math.round(challengerEnergy[k]) }))
+    .sort((a,b)=>b.e-a.e).slice(0,6);
+  const parts = pend.map(p => '<span>'+esc(p.user)+(p.name?(' · '+esc(p.name)):'')+' ⚡'+p.e+'</span>');
+  for(const q of fightQueue.slice(0,4)) parts.push('<span>'+esc(q.user)+' - '+esc(q.name)+'</span>');
+  el.innerHTML = parts.length ? ('<b>Retando:</b> '+parts.join(' · ')) : '';
 }
 
 function enqueueFighter(entry){
@@ -1760,9 +1767,12 @@ function sideForGift(username, namedChar){
 function weakestSide(){
   if(!sides.left.name) return 'left';
   if(!sides.right.name) return 'right';
-  if(sides.left.energy < sides.right.energy) return 'left';
-  if(sides.right.energy < sides.left.energy) return 'right';
-  return null;
+  if(sides.left.energy !== sides.right.energy)
+    return sides.left.energy < sides.right.energy ? 'left' : 'right';
+  // empate de energía: no eches al que defiende racha; si ninguno, el lado derecho
+  if((sides.left.streak||0) > (sides.right.streak||0)) return 'right';
+  if((sides.right.streak||0) > (sides.left.streak||0)) return 'left';
+  return 'right';
 }
 
 function isCurrentOwner(userKey, side){
@@ -1803,8 +1813,10 @@ function handleChallengerGift(userKey, username, named, face, value){
     delete pendingPick[userKey];
     const total = challengerEnergy[userKey];
     delete challengerEnergy[userKey];
+    renderQueue();
     return {side, total};
   }
+  renderQueue();   // sigue retando: su energía acumulada se ve en la barra
   return null;
 }
 
@@ -1937,20 +1949,28 @@ function avatarOf(d){
   return '/avatar?u='+encodeURIComponent(a);
 }
 
+const COMBO_RESET_MS = 5000;   // si pasa este tiempo sin ticks, el siguiente combo cuenta entero
 function giftEnergyValue(d, userKey){
-  const coins = Number(d.coins)>0 ? Number(d.coins) : GIFT_DEFAULT;
-  const repeat = Number(d.repeatcount)>0 ? Number(d.repeatcount) : 1;
+  const coins  = Number(d.coins) > 0 ? Number(d.coins) : GIFT_DEFAULT;
+  const repeat = Math.max(1, Math.floor(Number(
+    d.repeatcount ?? d.repeatCount ?? d.repeat_count ?? d.comboCount ?? d.combo_count) || 1));
+  const endRaw = d.repeatEnd ?? d.repeat_end ?? d.repeatend;
+  const isEnd  = endRaw===true || endRaw==='true' || endRaw===1 || endRaw==='1';
   const giftKey = d.giftid || d.giftId || d.giftname || d.giftName || 'gift';
-  const key = userKey+'|'+giftKey;
-  const last = giftRepeatState[key] || 0;
-  let delta = 1;
-  if(repeat > 1){
-    if(repeat > last) delta = repeat - last;
-    else if(repeat === last) delta = 0;
-    else delta = repeat;
+  const key = userKey + '|' + giftKey;
+  const now = Date.now();
+  const st = giftRepeatState[key];   // {count, ts} del combo en curso
+  let units;
+  if(repeat <= 1){
+    units = 1;                       // regalo único (o primer tick de un combo): SIEMPRE cuenta 1
+  } else if(!st || repeat < st.count || (now - st.ts) > COMBO_RESET_MS){
+    units = repeat;                  // combo nuevo / reiniciado / tras inactividad: cuenta el total
+  } else {
+    units = repeat - st.count;       // mismo combo en curso: solo el incremento (evita doble conteo)
   }
-  giftRepeatState[key] = repeat;
-  return Math.max(0, Math.round(coins * delta));
+  if(isEnd) delete giftRepeatState[key];                 // fin de combo: el próximo cuenta entero
+  else giftRepeatState[key] = { count: repeat, ts: now };
+  return Math.max(0, Math.round(coins * units));
 }
 
 function handleEvent(d){
