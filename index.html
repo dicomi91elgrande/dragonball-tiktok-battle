@@ -1765,6 +1765,11 @@ function weakestSide(){
   return null;
 }
 
+function isCurrentOwner(userKey, side){
+  const s = sides[side];
+  return !!(s && s.name && s.ownerKey === userKey);
+}
+
 function enterFromGift(entry, value){
   if(!entry || !hasPlayableSprite(entry.name)) return null;
   const side = openSide();
@@ -1777,6 +1782,30 @@ function enterFromGift(entry, value){
   if(value <= sides[weak].energy) return null;
   pickCharacter(weak, entry.name, entry.face, entry.user, entry.key || entry.user);
   return weak;
+}
+
+function challengerEntryFor(userKey, username, named, face){
+  const wanted = pendingPick[userKey] || null;
+  const giftName = named && hasPlayableSprite(named) ? named : null;
+  const entryName = wanted?.name || giftName || randomPlayableCharacter();
+  if(!entryName) return null;
+  const entry = {name:entryName, face: wanted?.face || face, user: wanted?.user || username, key:userKey};
+  if(!wanted) pendingPick[userKey] = entry;
+  return entry;
+}
+
+function handleChallengerGift(userKey, username, named, face, value){
+  const entry = challengerEntryFor(userKey, username, named, face);
+  if(!entry) return null;
+  challengerEnergy[userKey] = (challengerEnergy[userKey] || 0) + value;
+  const side = enterFromGift(entry, challengerEnergy[userKey]);
+  if(side){
+    delete pendingPick[userKey];
+    const total = challengerEnergy[userKey];
+    delete challengerEnergy[userKey];
+    return {side, total};
+  }
+  return null;
 }
 
 function popFeed(text, color, side){
@@ -1957,20 +1986,11 @@ function handleEvent(d){
     applyPendingCarryChange(userKey);
     let side = userTeam[userKey] || null;
     let energyToAdd = value;
-    if(!side){
-      const wanted = pendingPick[userKey] || null;
-      const giftName = named && hasPlayableSprite(named) ? named : null;
-      const entryName = wanted?.name || giftName || randomPlayableCharacter();
-      const entry = {name:entryName, face: wanted?.face || face, user: wanted?.user || username, key:userKey};
-      if(entryName && !wanted) pendingPick[userKey] = entry;
-      challengerEnergy[userKey] = (challengerEnergy[userKey] || 0) + value;
-      energyToAdd = challengerEnergy[userKey];
-      side = enterFromGift(entry, energyToAdd);
-      if(side){
-        delete pendingPick[userKey];
-        delete challengerEnergy[userKey];
-      }
-      if(!side) return;
+    if(!side || !isCurrentOwner(userKey, side)){
+      const result = handleChallengerGift(userKey, username, named, face, value);
+      if(!result) return;
+      side = result.side;
+      energyToAdd = result.total;
     }
     if(!sides[side].name) return;   // todavía no hay luchador en ese lado
     addEnergy(side, energyToAdd, username, userKey);
