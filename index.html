@@ -686,6 +686,7 @@ const sides = {
 };
 const userTeam = {};         // username -> 'left'|'right'
 const pendingPick = {};      // username -> personaje elegido por chat, pendiente de regalo
+const pendingCarryChange = {}; // ganador retenido -> nuevo personaje elegido tras reset, pendiente del primer regalo
 const challengerEnergy = {}; // username -> energía acumulada antes de entrar a la batalla
 const giftRepeatState = {};  // username+regalo -> último repeatcount visto en combos
 const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
@@ -1630,6 +1631,19 @@ function canChangeCarriedCharacter(userKey, side){
   return !!(s && s.name && s.ownerKey === userKey && (s.streak||0) > 0 && s.energy <= 0 && !running && !ended);
 }
 
+function applyPendingCarryChange(userKey){
+  const side = userTeam[userKey] || null;
+  const change = pendingCarryChange[userKey];
+  if(!side || !change || !hasPlayableSprite(change.name)) return side;
+  if(canChangeCarriedCharacter(userKey, side)){
+    const keepStreak = sides[side].streak || 0;
+    pickCharacter(side, change.name, change.face || sides[side].face, change.user, userKey, {streak:keepStreak});
+    carryWinner = snapshotWinner(side);
+  }
+  delete pendingCarryChange[userKey];
+  return userTeam[userKey] || side;
+}
+
 function pickCharacter(side, name, faceUrl, faceLabel, ownerKey, opts){
   if(ended) return;
   if(!hasPlayableSprite(name)) return;
@@ -1857,6 +1871,7 @@ function resetAll(){
   sides.right={name:null,energy:0,phase:0,supporters:[],face:null,user:null,ownerKey:null,streak:0};
   for(const k in userTeam) delete userTeam[k];
   for(const k in pendingPick) delete pendingPick[k];
+  for(const k in pendingCarryChange) delete pendingCarryChange[k];
   for(const k in challengerEnergy) delete challengerEnergy[k];
   for(const k in giftRepeatState) delete giftRepeatState[k];
   fightQueue.length = 0;
@@ -1924,6 +1939,7 @@ function handleEvent(d){
     const currentSide = userTeam[userKey] || null;
     if(currentSide){
       if(canChangeCarriedCharacter(userKey, currentSide)){
+        pendingCarryChange[userKey] = {name:named, face, user:username, key:userKey};
         const keepStreak = sides[currentSide].streak || 0;
         pickCharacter(currentSide, named, face || sides[currentSide].face, username, userKey, {streak:keepStreak});
         carryWinner = snapshotWinner(currentSide);
@@ -1938,6 +1954,7 @@ function handleEvent(d){
   if(isGift){
     const value = giftEnergyValue(d, userKey);
     if(value <= 0) return;
+    applyPendingCarryChange(userKey);
     let side = userTeam[userKey] || null;
     let energyToAdd = value;
     if(!side){

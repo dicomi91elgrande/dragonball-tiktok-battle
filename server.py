@@ -33,6 +33,7 @@ clients_lock = threading.Lock()
 # El overlay decide los detalles (transformaciones, sprites); aquí solo reconocemos el nombre.
 CHARACTERS = {
     'Goku': ['kakaroto', 'kakarot', 'son goku'],
+    'Black Goku': ['goku black', 'black goku', 'gokublack'],
     'Vegeta': ['begeta', 'principe vegeta'],
     'Gohan': ['son gohan', 'gohan bestia', 'beast gohan'],
     'Goten': [],
@@ -77,12 +78,14 @@ CHARACTERS = {
     'Kale': [],
     'Kefla': [],
     'Zamasu': ['zamas'],
-    'Black': ['goku black', 'black goku', 'gokublack'],
+    'Black': [],
     'Mr. Satan': ['satan', 'hercule'],
     'Dabra': ['dabura'],
     'Babidi': [],
     'Spopovic': ['spopovich', 'spopovitch'],
     'Oolong': ['oolon', 'oolong'],
+    'Puar': ['puar'],
+    'Dodoria': ['dodoria'],
     'Ginyu': ['capitan ginyu', 'captain ginyu', 'guinyu'],
     'Reecome': ['recoome', 'rikum', 'recoom'],
     'Janemba': ['yanemba'],
