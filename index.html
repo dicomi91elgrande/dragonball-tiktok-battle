@@ -636,7 +636,7 @@ const LADDERS = {
 
 // Personajes: a qué escalera pertenecen y el color de su equipo (barra).
 const ROSTER = {
-  'Goku':{ladder:'saiyan',team:'#ff7a00'}, 'Vegeta':{ladder:'saiyan',team:'#2d6cff'},
+  'Goku':{ladder:'saiyan',team:'#ff7a00'}, 'Black Goku':{ladder:'saiyan',team:'#e84393'}, 'Vegeta':{ladder:'saiyan',team:'#2d6cff'},
   'Gohan':{ladder:'saiyan',team:'#7d3cff'}, 'Goten':{ladder:'saiyan',team:'#ff5fa2'},
   'Trunks niño':{ladder:'saiyan',team:'#9b6bff'}, 'Trunks del futuro':{ladder:'saiyan',team:'#8e44ad'},
   'Bardock':{ladder:'saiyan',team:'#c0392b'},
@@ -664,7 +664,8 @@ const ROSTER = {
   'Videl':{ladder:'generic',team:'#fd79a8'}, 'Mr. Satan':{ladder:'generic',team:'#d35400'},
   'Dabra':{ladder:'generic',team:'#636e72'}, 'Babidi':{ladder:'generic',team:'#f39c12'},
   'Spopovic':{ladder:'generic',team:'#d6b15f'},
-  'Oolong':{ladder:'generic',team:'#ff9f9f'}, 'Ginyu':{ladder:'generic',team:'#8e44ad'},
+  'Oolong':{ladder:'generic',team:'#ff9f9f'}, 'Puar':{ladder:'generic',team:'#48dbfb'}, 'Dodoria':{ladder:'generic',team:'#ff5fa2'},
+  'Ginyu':{ladder:'generic',team:'#8e44ad'},
   'Reecome':{ladder:'generic',team:'#d35400'},
   'Janemba':{ladder:'generic',team:'#e056fd'},
 };
@@ -901,6 +902,14 @@ const SPRITES = {
     'Super Saiyan God':{f:'goku-v2-god',iw:433,ih:486,cx:25,cy:21,cw:383,ch:458,hx:408,hy:166,scale:2.85,x:20,y:66},
     'Super Saiyan Blue':{f:'goku-v2-blue',iw:444,ih:527,cx:23,cy:8,cw:391,ch:499,hx:414,hy:176,scale:2.85,x:20,y:81},
   },
+  'Black Goku': {
+    'Base':{f:'black-goku-base',iw:497,ih:531,cx:32,cy:22,cw:415,ch:466,hx:432,hy:198,scale:2.45,y:55,bob:true},
+    'Super Saiyan':{f:'black-goku-ssj1',iw:493,ih:494,cx:32,cy:6,cw:395,ch:488,hx:420,hy:198,scale:2.45,y:42,bob:true},
+    'Super Saiyan 2':{f:'black-goku-ssj2',iw:493,ih:494,cx:32,cy:6,cw:395,ch:488,hx:420,hy:198,scale:2.45,y:42,bob:true},
+    'Super Saiyan 3':{f:'black-goku-ssj3',iw:542,ih:504,cx:16,cy:9,cw:460,ch:481,hx:455,hy:205,scale:2.45,y:45,bob:true},
+    'Super Saiyan God':{f:'black-goku-god',iw:499,ih:520,cx:35,cy:0,cw:407,ch:491,hx:425,hy:198,scale:2.45,y:49,bob:true},
+    'Super Saiyan Blue':{f:'black-goku-blue',iw:1536,ih:1024,cx:47,cy:0,cw:1489,ch:990,hx:1275,hy:300,scale:1.38,y:65,bob:true},
+  },
   'Vegeta': {
     'Base':{f:'vegeta-v2-base',iw:533,ih:529,cx:42,cy:16,cw:420,ch:503,hx:462,hy:172,scale:2.45,x:20,y:55},
     'Super Saiyan':{f:'vegeta-v2-ssj1',iw:499,ih:543,cx:28,cy:15,cw:415,ch:504,hx:443,hy:174,scale:2.45,x:20,y:54},
@@ -1064,6 +1073,18 @@ const SPRITES = {
     'Furia':{f:'oolong-ssj1',iw:507,ih:740,cx:7,cy:13,cw:492,ch:707,hx:480,hy:270,scale:1.25,y:-3},
     'Poder máx.':{f:'oolong-ssj2',iw:556,ih:762,cx:22,cy:8,cw:506,ch:701,hx:520,hy:270,scale:1.25,y:-7},
     'Definitivo':{f:'oolong-ssj2',iw:556,ih:762,cx:22,cy:8,cw:506,ch:701,hx:520,hy:270,scale:1.25,y:-7},
+  },
+  'Puar': {
+    'Base':{f:'puar-1',iw:524,ih:620,cx:11,cy:45,cw:476,ch:499,hx:420,hy:205,scale:1.25,y:-8,bob:true},
+    'Furia':{f:'puar-2',iw:514,ih:563,cx:22,cy:39,cw:474,ch:499,hx:420,hy:195,scale:1.25,y:-8,bob:true},
+    'Poder máx.':{f:'puar-3',iw:1536,ih:1024,cx:49,cy:0,cw:1487,ch:1024,hx:1240,hy:330,scale:1.12,y:8,bob:true},
+    'Definitivo':{f:'puar-3',iw:1536,ih:1024,cx:49,cy:0,cw:1487,ch:1024,hx:1240,hy:330,scale:1.12,y:8,bob:true},
+  },
+  'Dodoria': {
+    'Base':{f:'dodoria-1',iw:521,ih:704,cx:11,cy:56,cw:476,ch:596,hx:435,hy:185,scale:1.82,y:74,bob:true},
+    'Furia':{f:'dodoria-2',iw:495,ih:659,cx:24,cy:50,cw:468,ch:592,hx:420,hy:180,scale:1.82,y:70,bob:true},
+    'Poder máx.':{f:'dodoria-3',iw:1536,ih:1024,cx:38,cy:0,cw:1498,ch:1024,hx:1260,hy:330,scale:1.36,y:66,bob:true},
+    'Definitivo':{f:'dodoria-3',iw:1536,ih:1024,cx:38,cy:0,cw:1498,ch:1024,hx:1260,hy:330,scale:1.36,y:66,bob:true},
   },
   'Ginyu': {
     'Base':{f:'ginyu-base',iw:644,ih:893,cx:15,cy:67,cw:531,ch:795,hx:535,hy:315,scale:1.43,y:63},
@@ -1255,10 +1276,18 @@ function findCharText(text){
   const m = raw.match(/!(\S+)/);
   const q = slug(m ? m[1] : raw);
   if(!q) return null;
-  let best = null;
-  for(const name of Object.keys(ROSTER)){
+  const names = Object.keys(ROSTER);
+  for(const name of names){
+    if(slug(name) === q) return name;
+  }
+  const bySpecificity = names.slice().sort((a,b)=>slug(b).length - slug(a).length);
+  for(const name of bySpecificity){
     const s = slug(name);
-    if(s===q || s.includes(q) || q.includes(s)) return name;
+    if(s.includes(q) || q.includes(s)) return name;
+  }
+  let best = null;
+  for(const name of names){
+    const s = slug(name);
     let dist = 0, a=q, b=s;
     const prev = Array.from({length:b.length+1},(_,i)=>i);
     for(let i=1;i<=a.length;i++){
